@@ -691,7 +691,7 @@ export default App;
 
 ## State and Lifecycle
 
-React state is...
+React state is in a jira demo...
 
 ## Learn More About Create React App
 
