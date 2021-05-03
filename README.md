@@ -6,7 +6,7 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-# Assembler School: React.js Intro Workshop
+# Assembler School: React.js Intro Workshop <!-- omit in toc -->
 
 In this workshop we will learn how to use React.js to build modern SPA.
 
@@ -20,7 +20,7 @@ First, you will need to clone the repo:
 $ git clone https://github.com/assembler-school/react-js-intro.git
 ```
 
-## Dependencies
+### Dependencies
 
 Before we can get started you will need to make sure that all the necessary dependencies are installed in your system.
 
@@ -45,7 +45,7 @@ You will also see any lint errors in the console.
 Launches the test runner in the interactive watch mode.\
 See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-## Contents and Branches Naming Strategy
+### Contents and Branches Naming Strategy
 
 The repository is made up of several branches that include the contents of each section.
 
@@ -69,6 +69,19 @@ Then, you can create a local branch based on a remote branch with the following 
 ```bash
 $ git checkout -b <new_branch_name> <remote_branch_name>
 ```
+
+## Table of Contents <!-- omit in toc -->
+
+- [Getting Started](#getting-started)
+- [Part I. What is React?](#part-i-what-is-react)
+- [Why use react?](#why-use-react)
+- [Creating a React App](#creating-a-react-app)
+- [JSX](#jsx)
+- [Render](#render)
+- [React Only Updates What’s Necessary](#react-only-updates-whats-necessary)
+- [Components and Props](#components-and-props)
+- [Styles In React.js](#styles-in-reactjs)
+- [Lists and Keys](#lists-and-keys)
 
 ---
 
@@ -223,7 +236,7 @@ function PostList() {
 }
 ```
 
-## Specifying Attributes with JSX
+### Specifying Attributes with JSX
 
 - You can use quotes to specify string literals as attributes.
 - You can also use curly braces to embed a JavaScript expression in an attribute.
@@ -238,7 +251,7 @@ function Button(props) {
 }
 ```
 
-## Specifying Children with JSX
+### Specifying Children with JSX
 
 We can also use the `children` prop to render child elements of a component.
 
@@ -293,7 +306,7 @@ function Button(props) {
 export default App;
 ```
 
-### React Only Updates What’s Necessary
+## React Only Updates What’s Necessary
 
 After looking at the workshop demo we can see that React DOM compares the element and its children to the previous one, and **only applies the DOM updates necessary** to bring the DOM to the desired state.
 
@@ -332,7 +345,7 @@ class SecondWelcome extends Component {
 export default App;
 ```
 
-## What are props?
+### What are props?
 
 React is a **component-based library** that divides the UI into little reusable pieces. In some cases, those components need to communicate (send data to each other) and the way to pass data between components is by using props.
 
@@ -441,7 +454,7 @@ function AssemblerText() {
 export default App;
 ```
 
-## Extracting Components in Modules
+### Extracting Components in Modules
 
 In React, usually all components are extracted in modules so that they can be reused.
 
@@ -691,17 +704,17 @@ class App extends Component {
 export default App;
 ```
 
-## Learn More About Create React App
+## Learn More About Create React App <!-- omit in toc -->
 
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
 
-## License
+## License <!-- omit in toc -->
 
 [MIT](https://choosealicense.com/licenses/mit/)
 
-## Contributors ✨
+## Contributors ✨ <!-- omit in toc -->
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
