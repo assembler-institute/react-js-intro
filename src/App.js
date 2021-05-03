@@ -1,11 +1,19 @@
 import React from "react";
 
+import Main from "./components/Main";
+
 function App() {
-  const fullName = "Josh Perez";
+  const count = 1;
 
-  const element = <h1>Hello, {fullName}</h1>;
-
-  return element;
+  return (
+    <Main>
+      <section className="row">
+        <div className="col col-12">
+          <h1>The current count is: {count}</h1>
+        </div>
+      </section>
+    </Main>
+  );
 }
 
 export default App;
