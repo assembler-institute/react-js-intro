@@ -320,7 +320,7 @@ function Welcome(props) {
 }
 
 // Or a class component
-class SecondWelcome extends React.Component {
+class SecondWelcome extends Component {
   // Notice that class components should have a render method
   render() {
     return <h1>Hello {this.props.name} from a class</h1>;
@@ -339,7 +339,7 @@ React is a **component-based library** that divides the UI into little reusable 
 ```jsx
 import React from "react";
 
-class Welcome extends React.Component {
+class Welcome extends Component {
   render() {
     return <h1>Hello {this.props.name}</h1>;
   }
@@ -466,7 +466,7 @@ import React from "react";
 
 import Button from "./components/Button/Button";
 
-class App extends React.Component {
+class App extends Component {
   render() {
     return (
       <div>
@@ -501,7 +501,7 @@ import React from "react";
 
 import Button from "./components/Button";
 
-class App extends React.Component {
+class App extends Component {
   render() {
     return (
       <div>
@@ -559,7 +559,7 @@ import React from "react";
 
 import Button from "./components/Button";
 
-class App extends React.Component {
+class App extends Component {
   render() {
     return (
       <div>
@@ -690,6 +690,756 @@ export default App;
 ```
 
 ## State and Lifecycle
+
+Like props, state holds information about the component. However, the kind of information and how it is handled is different.
+
+By default, a component has no state.
+
+For example, this component has no state:
+
+```jsx
+function App() {
+  const count = 1;
+
+  return (
+    <Main>
+      <section className="row">
+        <div className="col col-12">
+          <h1>The current count is: {count}</h1>
+        </div>
+      </section>
+    </Main>
+  );
+}
+```
+
+Neither does this one, even though it is created using a class:
+
+```jsx
+class Welcome extends Component {
+  render() {
+    return <h1>Hello {this.props.name}</h1>;
+  }
+}
+```
+
+## So When Would You Use State?
+
+When a component needs to keep track of information between renderings the component itself can create, update, and use state.
+
+We’ll be working with a fairly simple component to see state working in action.
+
+### Modifying the State
+
+Changing the state should only be done from inside a component through the `this.setState()` method.
+
+React exposes the `setState()` method on the component instance to update it so that react finds out data change and can re-render the view.
+
+```jsx
+import React, { Component } from "react";
+
+import Button from "./components/Button";
+import Main from "./components/Main";
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0,
+    };
+
+    this.increment = this.increment.bind(this);
+  }
+
+  increment() {
+    const { count } = this.state;
+    this.setState({ count: count + 1 });
+  }
+
+  render() {
+    const { count } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <h1>The current count is: {count}</h1>
+          </div>
+          <div className="col col-12">
+            <Button onClick={this.increment}>increment</Button>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+
+export default App;
+```
+
+## Lifecycle Methods
+
+React components have several lifecycle methods which you can monitor and manipulate during its three main phases.
+
+The three phases are: **Mounting**, **Updating**, and **Unmounting**.
+
+### Mounting
+
+Mounting means putting elements into the DOM. React has several built-in methods that gets called, in this order, when mounting a component, but these are the common ones:
+
+- `constructor()`
+- `render()`
+- `componentDidMount()`
+
+The `render()` method is required and will always be called, the others are optional and will be called if you define them.
+
+### `constructor()`
+
+The `constructor()` method is called before anything else, when the component is initiated, and it is the natural place to set up the initial state and other initial values.
+
+```jsx
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0,
+    };
+  }
+
+  render() {
+    const { count } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <h1>The current count is: {count}</h1>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+```
+
+### `render()`
+
+The `render()` method is always required, and is the method that actually outputs the HTML to the DOM.
+
+```jsx
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0,
+    };
+  }
+
+  render() {
+    const { count } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <h1>The current count is: {count}</h1>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+```
+
+### `componentDidMount`
+
+The `componentDidMount()` method is called after the component is rendered. This is where you run statements that requires that the component is already placed in the DOM.
+
+At first my favorite color is red, but give me a second, and it is yellow instead:
+
+```jsx
+class Example extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { favoriteColor: "red" };
+  }
+
+  componentDidMount() {
+    setTimeout(() => {
+      this.setState({ favoriteColor: "yellow" });
+    }, 1000);
+  }
+
+  render() {
+    const { favoriteColor } = this.state;
+
+    return <h1>My Favorite Color is {favoriteColor}</h1>;
+  }
+}
+```
+
+### Updating
+
+The next phase in the lifecycle is when a component is updated. A component is updated whenever there is a change in the component's state or props.
+
+React calls the following methods, in this order, when a component is updated:
+
+- `render()`
+- `componentDidUpdate()`
+
+The `render()` method is required and will always be called, the others are optional and will be called if you define them.
+
+```jsx
+class Example extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { favoriteColor: "red" };
+  }
+
+  componentDidMount() {
+    setTimeout(() => {
+      this.setState({ favoriteColor: "yellow" });
+    }, 1000);
+  }
+
+  componentDidUpdate() {
+    const { favoriteColor } = this.state;
+    console.log(`The updated favorite is ${favoriteColor}`);
+  }
+
+  render() {
+    const { favoriteColor } = this.state;
+
+    return (
+      <div>
+        <h1>My Favorite Color is {favoriteColor}</h1>
+      </div>
+    );
+  }
+}
+```
+
+### Unmounting
+
+The next phase in the lifecycle is when a component is removed from the DOM, or unmounting as React likes to call it.
+
+React has only one built-in method that gets called when a component is unmounted:
+
+- `componentWillUnmount()`
+
+```jsx
+class Child extends Component {
+  componentWillUnmount() {
+    console.log("Example component is about to be unmounted.");
+  }
+
+  render() {
+    return <h1>Hello Assembler!</h1>;
+  }
+}
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      show: true,
+    };
+
+    this.handleRemove = this.handleRemove.bind(this);
+  }
+
+  handleRemove() {
+    this.setState((prevState) => ({
+      ...prevState,
+      show: !prevState.show,
+    }));
+  }
+
+  render() {
+    const { show } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <Button onClick={this.handleRemove}>remove child</Button>
+          </div>
+          <div className="col col-12">{show ? <Child /> : null}</div>
+        </section>
+      </Main>
+    );
+  }
+}
+```
+
+## Using State Correctly
+
+There are three things you should know about `setState()`.
+
+### 1. Do Not Modify State Directly
+
+For example, this will not re-render a component. The only place where you can assign `this.state` is the constructor.
+
+```jsx
+// Wrong
+this.state.comment = "Hello";
+
+// Instead, use setState():
+
+// Correct
+this.setState({ comment: "Hello" });
+```
+
+### 2. State Updates May Be Asynchronous
+
+React may batch multiple `setState()` calls into a single update for performance. Because this.props and this.state may be updated asynchronously, you should not rely on their values for calculating the next state.
+
+#### Wrong Way to Update State
+
+For example, this code may fail to update the counter:
+
+```jsx
+class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      count: 0,
+    };
+
+    this.increment = this.increment.bind(this);
+  }
+
+  increment() {
+    this.setState({
+      count: this.state.count + 1,
+    });
+
+    this.setState({
+      count: this.state.count + 1,
+    });
+
+    this.setState({
+      count: this.state.count + 1,
+    });
+  }
+
+  render() {
+    const { count } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <Button onClick={this.increment}>Increment</Button>
+          </div>
+          <div className="col col-12">
+            <h1>Current count: {count}</h1>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+```
+
+Even though we have 3 calls to `setState()` the counter is only incremented once.
+
+#### Wright Way to Update State
+
+To fix it, we need to use the second form of calling `setState()` that accepts a function rather than an object.
+
+```jsx
+class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      count: 0,
+    };
+
+    this.increment = this.increment.bind(this);
+  }
+
+  increment() {
+    this.setState((prevState) => ({
+      count: prevState.count + 1,
+    }));
+
+    this.setState((prevState) => ({
+      count: prevState.count + 1,
+    }));
+
+    this.setState((prevState) => ({
+      count: prevState.count + 1,
+    }));
+  }
+
+  render() {
+    const { count } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <Button onClick={this.increment}>Increment</Button>
+          </div>
+          <div className="col col-12">
+            <h1>Current count: {count}</h1>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+```
+
+Now the `state.count` property is incremented by 3 each time.
+
+### 3. State Updates are Merged
+
+When you call `setState()`, React merges the object you provide into the current state. For example, your state may contain several independent variables:
+
+```jsx
+class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      user: {
+        firstName: "dani",
+        email: "dani@mail.com",
+      },
+      count: 0,
+    };
+
+    this.increment = this.increment.bind(this);
+  }
+
+  increment() {
+    this.setState((prevState) => ({
+      count: prevState.count + 1,
+    }));
+  }
+
+  render() {
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <Button onClick={this.increment}>Increment</Button>
+          </div>
+          <div className="col col-12">
+            <pre>
+              <code>{JSON.stringify(this.state, null, 2)}</code>
+            </pre>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+```
+
+## The Data Flows Down
+
+Neither parent nor child components can know if a certain component is stateful or stateless, and they shouldn’t care whether it is defined as a function or a class.
+
+This is why state is often called local or encapsulated. It is not accessible to any component other than the one that owns and sets it.
+
+A component may choose to pass its state down as props to its child components.
+
+The `<FormattedDate />` component would receive the date in its props and wouldn’t know whether it came from the `<Clock />`’s state, its props, or it was typed by hand:
+
+```jsx
+// passing the data as props
+<FormattedDate date={this.state.date} />;
+
+function FormattedDate(props) {
+  return <h2>It is {props.date.toLocaleTimeString()}.</h2>;
+}
+```
+
+## Handling Events
+
+Handling events with React elements is very similar to handling events on DOM elements. There are some syntax differences:
+
+- React events are named using `camelCase`, rather than `lowercase`.
+- With JSX you pass a function as the event handler, rather than a string.
+
+```jsx
+// HTML form
+<button onclick="activateLasers()">
+  Activate Lasers
+</button>
+
+// React form
+<button onClick={activateLasers}>
+  Activate Lasers
+</button>
+```
+
+### Binding `this` in the `constructor()`
+
+Make `this` available in the `shoot` function by binding it in the `constructor()`:
+
+```jsx
+class Football extends Component {
+  constructor(props) {
+    super(props);
+    this.shoot = this.shoot.bind(this);
+  }
+
+  shoot() {
+    console.log(this);
+    /*
+      Thanks to the binding in the constructor function,
+      the 'this' keyword now refers to the component object
+    */
+  }
+
+  render() {
+    return <button onClick={this.shoot}>Take the shot!</button>;
+  }
+}
+```
+
+## Practical Examples
+
+### Saving the App State in `localStorage`
+
+Let's build a simple example of storing the state in `localStorage` and loading it when mounting the component.
+
+```jsx
+function loadLocalStorage() {
+  const json = localStorage.getItem("app-state");
+  const state = JSON.parse(json);
+
+  if (!state) {
+    return {
+      user: {
+        isLoggedIn: false,
+        email: null,
+        firstName: null,
+        lastName: null,
+      },
+      count: 0,
+    };
+  }
+
+  return state;
+}
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      user: {
+        isLoggedIn: false,
+        email: null,
+        firstName: null,
+        lastName: null,
+      },
+      count: 0,
+    };
+
+    this.increment = this.increment.bind(this);
+    this.login = this.login.bind(this);
+    this.logout = this.logout.bind(this);
+  }
+
+  componentDidMount() {
+    const prevState = loadLocalStorage();
+
+    this.setState({
+      user: prevState.user,
+      count: prevState.count,
+    });
+  }
+
+  componentDidUpdate() {
+    localStorage.setItem("app-state", JSON.stringify(this.state));
+  }
+
+  increment() {
+    this.setState((prevState) => ({
+      count: prevState.count + 1,
+    }));
+  }
+
+  logout() {
+    this.setState({
+      user: {
+        isLoggedIn: false,
+        email: null,
+        firstName: null,
+        lastName: null,
+      },
+    });
+  }
+
+  login() {
+    this.setState({
+      user: {
+        isLoggedIn: true,
+        email: "dani@mail.com",
+        firstName: "dani",
+        lastName: "assembler",
+      },
+    });
+  }
+
+  render() {
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <div className="d-flex">
+              <span className="mr-3">
+                <Button onClick={this.increment}>Increment</Button>
+              </span>
+              <span className="mr-3">
+                <Button onClick={this.logout}>Logout</Button>
+              </span>
+              <Button onClick={this.login}>Login</Button>
+            </div>
+          </div>
+          <div className="col col-12">
+            <pre>
+              <code>{JSON.stringify(this.state, null, 2)}</code>
+            </pre>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+```
+
+### Forms
+
+Let's see a simple example of how to work with forms (we will see more about working with forms in the next pill):
+
+```jsx
+class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      selectedUser: "",
+    };
+
+    this.handleSelect = this.handleSelect.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleSelect(event) {
+    this.setState({
+      selectedUser: event.target.value,
+    });
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+    console.log(this.state);
+  }
+
+  render() {
+    const { selectedUser } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <h1>Selected user: {selectedUser}</h1>
+          </div>
+          <div className="col col-12">
+            <pre>
+              <code>{JSON.stringify(this.state, null, 2)}</code>
+            </pre>
+          </div>
+          <div className="col col-12">
+            <div className="form-group">
+              <form onSubmit={this.handleSubmit}>
+                <label htmlFor={selectedUser} className="d-block">
+                  <span className="d-block mb-2">Select User</span>
+                  <select
+                    name={selectedUser}
+                    id={selectedUser}
+                    value={selectedUser}
+                    onChange={this.handleSelect}
+                    onBlur={this.handleSelect}
+                    className="custom-select"
+                  >
+                    <option value="dani">dani</option>
+                    <option value="alex">alex</option>
+                    <option value="maria">maria</option>
+                    <option value="ana">ana</option>
+                  </select>
+                </label>
+              </form>
+            </div>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+```
+
+### Conditional Class Names
+
+Let's see how we can conditionally render classes based on the current state value:
+
+```jsx
+class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      count: 0,
+    };
+
+    this.increment = this.increment.bind(this);
+    this.resetCount = this.resetCount.bind(this);
+  }
+
+  increment() {
+    this.setState((prevState) => ({
+      count: prevState.count + 1,
+    }));
+  }
+
+  resetCount() {
+    this.setState({
+      count: 0,
+    });
+  }
+
+  render() {
+    const { count } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <span className="mr-2">
+              <Button onClick={this.increment}>Increment</Button>
+            </span>
+            <Button onClick={this.resetCount}>Reset Count</Button>
+          </div>
+          <div className="col col-12">
+            <h1 className={count > 2 ? "text-danger" : "text-success"}>
+              Current Count: {count}
+            </h1>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+```
 
 ## Learn More About Create React App
 
