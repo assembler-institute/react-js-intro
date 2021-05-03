@@ -691,6 +691,8 @@ export default App;
 
 ## State and Lifecycle
 
+React state is...
+
 ## Learn More About Create React App
 
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
