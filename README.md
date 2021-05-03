@@ -70,7 +70,9 @@ Then, you can create a local branch based on a remote branch with the following 
 $ git checkout -b <new_branch_name> <remote_branch_name>
 ```
 
-## What is React?
+---
+
+## Part I. What is React?
 
 React is a JavaScript library for building user interfaces. It is an open-source, component-based, front-end library responsible only for the application’s view layer.
 
@@ -689,7 +691,9 @@ class App extends Component {
 export default App;
 ```
 
-## State and Lifecycle
+---
+
+## Part II. State and Lifecycle
 
 Like props, state holds information about the component. However, the kind of information and how it is handled is different.
 
