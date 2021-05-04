@@ -88,6 +88,9 @@ $ git checkout -b <new_branch_name> <remote_branch_name>
 - [The Data Flows Down](#the-data-flows-down)
 - [Handling Events](#handling-events)
 - [Practical Examples](#practical-examples)
+- [Part III. Forms and Events](#part-iii-forms-and-events)
+- [Controlled Components](#controlled-components)
+- [Handling Multiple Inputs](#handling-multiple-inputs)
 - [Learn More About Create React App](#learn-more-about-create-react-app)
 
 ---
@@ -1463,6 +1466,453 @@ class App extends Component {
     );
   }
 }
+```
+
+---
+
+## Part III. Forms and Events
+
+Handling events with React elements is very similar to handling events on DOM elements. There are some syntax differences:
+
+React events are named using camelCase, rather than lowercase. With JSX you pass a function as the event handler, rather than a string.
+
+For example, the HTML:
+
+```html
+<button onclick="activateLasers()">Activate Lasers</button>
+```
+
+is slightly different in React:
+
+```jsx
+<button onClick={activateLasers}>Activate Lasers</button>
+```
+
+Another important difference is that if we want to prevent the default action of an event in React we `return false;`. Instead, we need to call the `event.preventDefault()` method.
+
+## Controlled Components
+
+In HTML, form elements such as `<input>`, `<textarea>`, and `<select>` typically maintain their own state and update it based on user input. In React, mutable state is typically kept in the state property of components, and only updated with `setState()`.
+
+We can combine the two by making the React state be the _**single source of truth**_. Then the React component that renders a form also controls what happens in that form on subsequent user input. An input form element whose value is controlled by React in this way is called a _**controlled component**_.
+
+In the following example, the form and its inputs are controlled components.
+
+```jsx
+import React, { Component } from "react";
+
+import Main from "./components/Main";
+import Input from "./components/Input";
+import Button from "./components/Button";
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      firstName: "",
+    };
+
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) {
+    this.setState({
+      firstName: event.target.value,
+    });
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+    console.log(event);
+    console.log(this.state);
+  }
+
+  render() {
+    const { firstName } = this.state;
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <form onSubmit={this.handleSubmit}>
+              <div className="form-group">
+                <Input
+                  label="First name"
+                  placeholder="Your first name"
+                  type="text"
+                  id={firstName}
+                  name={firstName}
+                  value={firstName}
+                  handleChange={this.handleChange}
+                />
+              </div>
+              <Button submitButton>Submit</Button>
+            </form>
+          </div>
+          <div className="col col-12 mt-4">
+            <pre className="bg-light p-3">
+              <code>{JSON.stringify(this.state, null, 2)}</code>
+            </pre>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+
+export default App;
+```
+
+### Synthetic Events
+
+In the previous example, `event` was a synthetic event. React defines these synthetic events according to the W3C spec, so you don’t need to worry about cross-browser compatibility. React events do not work exactly the same as native events. See the [SyntheticEvent](https://reactjs.org/docs/events.html) reference guide to learn more.
+
+When using React, you generally don’t need to call `addEventListener` to add listeners to a DOM element after it is created. Instead, just provide a listener when the element is initially rendered.
+
+When you define a component using an ES6 class, a common pattern is for an event handler to be a method on the class. In our previous example, we had the `handleChange()` method which is used to store in state the input value.
+
+## Handling Multiple Inputs
+
+Here we can see an example of controlling multiple input types:
+
+```jsx
+import React, { Component } from "react";
+
+import Main from "./components/Main";
+import Button from "./components/Button";
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      submitted: false,
+      fullName: "",
+      age: 0,
+      consentAccepted: false,
+      hobby: "",
+      description: "",
+    };
+
+    this.handleFullNameChange = this.handleFullNameChange.bind(this);
+    this.handleAgeChange = this.handleAgeChange.bind(this);
+    this.handleConsentAcceptedChange = this.handleConsentAcceptedChange.bind(
+      this
+    );
+    this.handleHobbyChange = this.handleHobbyChange.bind(this);
+    this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleFullNameChange(event) {
+    this.setState({
+      fullName: event.target.value,
+    });
+  }
+
+  handleAgeChange(event) {
+    this.setState({
+      age: Number(event.target.value),
+    });
+  }
+
+  handleConsentAcceptedChange(event) {
+    this.setState({
+      consentAccepted: event.target.checked,
+    });
+  }
+
+  handleHobbyChange(event) {
+    this.setState({
+      hobby: event.target.value,
+    });
+  }
+
+  handleDescriptionChange(event) {
+    this.setState({
+      description: event.target.value,
+    });
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+
+    this.setState({
+      submitted: true,
+    });
+  }
+
+  render() {
+    const {
+      fullName,
+      age,
+      consentAccepted,
+      hobby,
+      description,
+      submitted,
+    } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <h1>Your profile</h1>
+          </div>
+          <div className="col col-12 mb-3">
+            <hr />
+          </div>
+          <div className="col col-12">
+            <form onSubmit={this.handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="fullName">Your full name</label>
+                <input
+                  type="text"
+                  id="fullName"
+                  name="fullName"
+                  value={fullName}
+                  onChange={this.handleFullNameChange}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="age">Your age</label>
+                <input
+                  type="number"
+                  id="age"
+                  name="age"
+                  value={age}
+                  onChange={this.handleAgeChange}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="hobby">Your hobby</label>
+                <select
+                  name="hobby"
+                  id="hobby"
+                  value={hobby}
+                  onChange={this.handleHobbyChange}
+                  onBlur={this.handleHobbyChange}
+                  className="form-control"
+                >
+                  <option value="Programming">Programming</option>
+                  <option value="Running">Running</option>
+                  <option value="Skying">Skying</option>
+                  <option value="Eating">Eating</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="description">Description</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  cols="20"
+                  rows="4"
+                  value={description}
+                  onChange={this.handleDescriptionChange}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-check mb-3">
+                <input
+                  type="checkbox"
+                  id="consentAccepted"
+                  name="consentAccepted"
+                  checked={consentAccepted}
+                  onChange={this.handleConsentAcceptedChange}
+                  className="form-check-input"
+                />
+                <label htmlFor="consentAccepted" className="form-check-label">
+                  Do you accept the privacy policy?
+                </label>
+              </div>
+              <Button disabled={!consentAccepted} submitButton>
+                Submit
+              </Button>
+            </form>
+          </div>
+          {submitted && (
+            <div className="col col-12 mt-4">
+              <h2 className="h4">Submitted!</h2>
+            </div>
+          )}
+          <div className="col col-12 mt-4">
+            <pre className="bg-light p-3">
+              <code>{JSON.stringify(this.state, null, 2)}</code>
+            </pre>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+
+export default App;
+```
+
+### Reusing Event Handlers
+
+One way to simplify this code is by using the `event.name` property to have a single event listener for multiple inputs.
+
+In this case we are reusing the `handleChange` handler for the input elements that are not of type `checkbox` or `number` because they not use the `event.value` property or it should be coerced to a number.
+
+```jsx
+import React, { Component } from "react";
+
+import Main from "./components/Main";
+import Button from "./components/Button";
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      submitted: false,
+      fullName: "",
+      age: 0,
+      consentAccepted: false,
+      hobby: "",
+      description: "",
+    };
+
+    this.handleChange = this.handleChange.bind(this);
+    this.handleAgeChange = this.handleAgeChange.bind(this);
+    this.handleConsentAcceptedChange = this.handleConsentAcceptedChange.bind(
+      this
+    );
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) {
+    this.setState({
+      [event.target.name]: event.target.value,
+    });
+  }
+
+  handleAgeChange(event) {
+    this.setState({
+      age: Number(event.target.value),
+    });
+  }
+
+  handleConsentAcceptedChange(event) {
+    this.setState({
+      consentAccepted: event.target.checked,
+    });
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+
+    this.setState({
+      submitted: true,
+    });
+  }
+
+  render() {
+    const {
+      fullName,
+      age,
+      consentAccepted,
+      hobby,
+      description,
+      submitted,
+    } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <h1>Your profile</h1>
+          </div>
+          <div className="col col-12 mb-3">
+            <hr />
+          </div>
+          <div className="col col-12">
+            <form onSubmit={this.handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="fullName">Your full name</label>
+                <input
+                  type="text"
+                  id="fullName"
+                  name="fullName"
+                  value={fullName}
+                  onChange={this.handleChange}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="age">Your age</label>
+                <input
+                  type="number"
+                  id="age"
+                  name="age"
+                  value={age}
+                  onChange={this.handleAgeChange}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="hobby">Your hobby</label>
+                <select
+                  name="hobby"
+                  id="hobby"
+                  value={hobby}
+                  onChange={this.handleChange}
+                  onBlur={this.handleChange}
+                  className="form-control"
+                >
+                  <option value="Programming">Programming</option>
+                  <option value="Running">Running</option>
+                  <option value="Skying">Skying</option>
+                  <option value="Eating">Eating</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="description">Description</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  cols="20"
+                  rows="4"
+                  value={description}
+                  onChange={this.handleChange}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-check mb-3">
+                <input
+                  type="checkbox"
+                  id="consentAccepted"
+                  name="consentAccepted"
+                  checked={consentAccepted}
+                  onChange={this.handleConsentAcceptedChange}
+                  className="form-check-input"
+                />
+                <label htmlFor="consentAccepted" className="form-check-label">
+                  Do you accept the privacy policy?
+                </label>
+              </div>
+              <Button disabled={!consentAccepted} submitButton>
+                Submit
+              </Button>
+            </form>
+          </div>
+          {submitted && (
+            <div className="col col-12 mt-4">
+              <h2 className="h4">Submitted!</h2>
+            </div>
+          )}
+          <div className="col col-12 mt-4">
+            <pre className="bg-light p-3">
+              <code>{JSON.stringify(this.state, null, 2)}</code>
+            </pre>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+
+export default App;
 ```
 
 ## Learn More About Create React App
