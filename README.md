@@ -91,6 +91,7 @@ $ git checkout -b <new_branch_name> <remote_branch_name>
 - [Part III. Forms and Events](#part-iii-forms-and-events)
 - [Controlled Components](#controlled-components)
 - [Handling Multiple Inputs](#handling-multiple-inputs)
+- [Part IV. Formik](#part-iv-formik)
 - [Learn More About Create React App](#learn-more-about-create-react-app)
 
 ---
@@ -1754,6 +1755,196 @@ export default App;
 One way to simplify this code is by using the `event.name` property to have a single event listener for multiple inputs.
 
 In this case we are reusing the `handleChange` handler for the input elements that are not of type `checkbox` or `number` because they not use the `event.value` property or it should be coerced to a number.
+
+```jsx
+import React, { Component } from "react";
+
+import Main from "./components/Main";
+import Button from "./components/Button";
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      submitted: false,
+      fullName: "",
+      age: 0,
+      consentAccepted: false,
+      hobby: "",
+      description: "",
+    };
+
+    this.handleChange = this.handleChange.bind(this);
+    this.handleAgeChange = this.handleAgeChange.bind(this);
+    this.handleConsentAcceptedChange = this.handleConsentAcceptedChange.bind(
+      this
+    );
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) {
+    this.setState({
+      [event.target.name]: event.target.value,
+    });
+  }
+
+  handleAgeChange(event) {
+    this.setState({
+      age: Number(event.target.value),
+    });
+  }
+
+  handleConsentAcceptedChange(event) {
+    this.setState({
+      consentAccepted: event.target.checked,
+    });
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+
+    this.setState({
+      submitted: true,
+    });
+  }
+
+  render() {
+    const {
+      fullName,
+      age,
+      consentAccepted,
+      hobby,
+      description,
+      submitted,
+    } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <h1>Your profile</h1>
+          </div>
+          <div className="col col-12 mb-3">
+            <hr />
+          </div>
+          <div className="col col-12">
+            <form onSubmit={this.handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="fullName">Your full name</label>
+                <input
+                  type="text"
+                  id="fullName"
+                  name="fullName"
+                  value={fullName}
+                  onChange={this.handleChange}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="age">Your age</label>
+                <input
+                  type="number"
+                  id="age"
+                  name="age"
+                  value={age}
+                  onChange={this.handleAgeChange}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="hobby">Your hobby</label>
+                <select
+                  name="hobby"
+                  id="hobby"
+                  value={hobby}
+                  onChange={this.handleChange}
+                  onBlur={this.handleChange}
+                  className="form-control"
+                >
+                  <option value="Programming">Programming</option>
+                  <option value="Running">Running</option>
+                  <option value="Skying">Skying</option>
+                  <option value="Eating">Eating</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="description">Description</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  cols="20"
+                  rows="4"
+                  value={description}
+                  onChange={this.handleChange}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-check mb-3">
+                <input
+                  type="checkbox"
+                  id="consentAccepted"
+                  name="consentAccepted"
+                  checked={consentAccepted}
+                  onChange={this.handleConsentAcceptedChange}
+                  className="form-check-input"
+                />
+                <label htmlFor="consentAccepted" className="form-check-label">
+                  Do you accept the privacy policy?
+                </label>
+              </div>
+              <Button disabled={!consentAccepted} submitButton>
+                Submit
+              </Button>
+            </form>
+          </div>
+          {submitted && (
+            <div className="col col-12 mt-4">
+              <h2 className="h4">Submitted!</h2>
+            </div>
+          )}
+          <div className="col col-12 mt-4">
+            <pre className="bg-light p-3">
+              <code>{JSON.stringify(this.state, null, 2)}</code>
+            </pre>
+          </div>
+        </section>
+      </Main>
+    );
+  }
+}
+
+export default App;
+```
+
+---
+
+## Part IV. Formik
+
+Even though we can manage forms in React using controlled components we still haven't seen how to add form validation.
+
+A simple solution would be to check the values of each input field in the `handleChange` event handlers to see if the email field passes a Regex validation or to see if the checkbox was checked before we can submit the form.
+
+However, we can use a simpler solution: the [Formik](https://formik.org/docs/overview) package.
+
+The main pain points that this library solves are:
+
+- Getting values in and out of form state
+- Validation and error messages
+- Handling form submission
+
+### Getting Started With Formik
+
+First, lets install the formik package together with the yup package that is used for validating the form fields
+
+```sh
+$  npm install formik yup
+```
+
+### Converting a Form to Formik
+
+Lets see how we can convert the following form to Formik.
+
+`@see` the `<App />` component for the solution.
 
 ```jsx
 import React, { Component } from "react";
