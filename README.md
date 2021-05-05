@@ -92,6 +92,9 @@ $ git checkout -b <new_branch_name> <remote_branch_name>
 - [Controlled Components](#controlled-components)
 - [Handling Multiple Inputs](#handling-multiple-inputs)
 - [Part IV. Formik](#part-iv-formik)
+- [Part V. React Router Intro](#part-v-react-router-intro)
+- [Quick Start](#quick-start)
+- [BrowserRouter](#browserrouter)
 - [Learn More About Create React App](#learn-more-about-create-react-app)
 
 ---
@@ -2099,6 +2102,404 @@ class App extends Component {
           </div>
         </section>
       </Main>
+    );
+  }
+}
+
+export default App;
+```
+
+---
+
+## Part V. React Router Intro
+
+### What is React Router?
+
+React Router is the standard routing library for React.
+
+From the [docs](https://reactrouter.com/web/guides/quick-start)
+
+> React Router keeps your UI in sync with the URL. It has a simple API with powerful features like lazy code loading, dynamic route matching, and location transition handling built right in.
+
+### Why use React Router?
+
+React Router allows us to build a single-page web application with navigation without the page refreshing as the user navigates.
+
+React Router uses component structure to call components, which display the appropriate information.
+
+<img src='src/img/react-router-diagram.png'>
+
+## Quick Start
+
+To get started with React Router in a web app, you’ll need to install React Router from npm using the `react-router-dom` package.
+
+```bash
+npm install react-router-dom
+```
+
+## BrowserRouter
+
+### Primary Components
+
+There are three primary categories of components in React Router:
+
+- routers, like `<BrowserRouter>`
+- route matchers, like `<Route>` and `<Switch>`
+- and navigation, like `<Link>`, `<NavLink>`, and `<Redirect>`
+
+We also like to think of the navigation components as `route changers`. All of the components that you use in a web application should be imported from `react-router-dom`.
+
+```jsx
+import { BrowserRouter, Route, Link } from "react-router-dom";
+```
+
+### BrowserRouter Usage
+
+A `<BrowserRouter>` uses regular URL paths. These are generally the best-looking URLs.
+
+```jsx
+// index.js
+import React from "react";
+import ReactDOM from "react-dom";
+import { BrowserRouter } from "react-router-dom";
+
+import App from "./App";
+
+ReactDOM.render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>,
+  document.getElementById("root")
+);
+```
+
+However, this doesn't do much so far. Let's see how to fix that.
+
+First lets create the constants that will hold the route paths:
+
+```js
+// src/constants/routes.js
+export const HOME = "/";
+export const PROFILE = "/profile";
+```
+
+Then, lets create the page components.
+
+First, we will create the `/` page component.
+
+```jsx
+// src/pages/Home.js
+import React from "react";
+
+import Main from "../../components/Main";
+
+function Home({ users }) {
+  return (
+    <Main>
+      <div className="row">
+        <div className="col col-12">
+          <h1>Home</h1>
+        </div>
+        <div className="col col-12 mb-3">
+          <hr />
+        </div>
+
+        {users.length > 0 ? (
+          users.map((user) => (
+            <div key={user.id} className="col col-12">
+              <pre className="mb-3">
+                <code>
+                  {user.fullName} likes: {user.hobby}
+                </code>
+              </pre>
+              <hr />
+            </div>
+          ))
+        ) : (
+          <>
+            <div className="col col-12">
+              <pre className="m-0">
+                <code>no users</code>
+              </pre>
+            </div>
+            <div className="col col-12 mt-3">
+              <hr />
+            </div>
+          </>
+        )}
+      </div>
+    </Main>
+  );
+}
+
+export default Home;
+```
+
+And the `/profile` page:
+
+```jsx
+// src/pages/Profile.js
+import React, { Component } from "react";
+import { Redirect } from "react-router-dom";
+import { Formik } from "formik";
+import * as Yup from "yup";
+import { v4 as uuid } from "uuid";
+
+import { HOME } from "../../constants/routes";
+
+import Main from "../../components/Main";
+import Button from "../../components/Button";
+
+const FormSchema = Yup.object().shape({
+  fullName: Yup.string()
+    .min(2, "The full name is too short")
+    .max(80, "The full name is too long")
+    .required("The full name is required"),
+  age: Yup.number()
+    .min(18, "You must be 18 years old or older")
+    .max(72, "You must be 72 years old or younger")
+    .required("The age is required"),
+  consentAccepted: Yup.bool().oneOf([true], "The consent must be accepted"),
+  hobby: Yup.string()
+    .oneOf(
+      ["Programming", "Running", "Skying", "Eating"],
+      "The hobby must be one of these: 'Programming', 'Running', 'Skying', 'Eating'"
+    )
+    .required("The hobby is required"),
+  description: Yup.string()
+    .min(2, "The description is too short")
+    .max(200, "The description is too long")
+    .required("The hobby is required"),
+});
+
+class Profile extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      submitted: false,
+    };
+  }
+
+  render() {
+    const { submitted } = this.state;
+
+    return (
+      <Main>
+        <section className="row">
+          <div className="col col-12">
+            <h1>Your profile</h1>
+          </div>
+          <div className="col col-12 mb-3">
+            <hr />
+          </div>
+          <div className="col col-12">
+            <Formik
+              initialValues={{
+                fullName: "",
+                age: 0,
+                consentAccepted: false,
+                hobby: "",
+                description: "",
+              }}
+              validationSchema={FormSchema}
+              onSubmit={(values, { setSubmitting }) => {
+                const { saveUser } = this.props;
+                setSubmitting(true);
+
+                saveUser({ id: uuid(), ...values });
+
+                setTimeout(() => {
+                  this.setState({ submitted: true });
+                }, 500);
+              }}
+            >
+              {({
+                handleBlur,
+                handleChange,
+                handleSubmit,
+                touched,
+                errors,
+                values,
+                isValid,
+                isSubmitting,
+              }) => (
+                <form onSubmit={handleSubmit}>
+                  <div className="form-group">
+                    <label htmlFor="fullName">Your full name</label>
+                    <input
+                      type="text"
+                      id="fullName"
+                      name="fullName"
+                      value={values.fullName}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={
+                        touched.fullName && errors.fullName
+                          ? "form-control is-invalid"
+                          : "form-control"
+                      }
+                    />
+                    {touched.fullName && errors.fullName && (
+                      <p className="invalid-feedback">{errors.fullName}</p>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="age">Your age</label>
+                    <input
+                      type="number"
+                      id="age"
+                      name="age"
+                      value={values.age}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={
+                        touched.age && errors.age
+                          ? "form-control is-invalid"
+                          : "form-control"
+                      }
+                    />
+                    {touched.age && errors.age && (
+                      <p className="invalid-feedback">{errors.age}</p>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="hobby">Your hobby</label>
+                    <select
+                      name="hobby"
+                      id="hobby"
+                      value={values.hobby}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={
+                        touched.hobby && errors.hobby
+                          ? "form-control is-invalid"
+                          : "form-control"
+                      }
+                    >
+                      <option value="choose">Choose a hobby</option>
+                      <option value="Programming">Programming</option>
+                      <option value="Running">Running</option>
+                      <option value="Skying">Skying</option>
+                      <option value="Eating">Eating</option>
+                    </select>
+                    {touched.hobby && errors.hobby && (
+                      <p className="invalid-feedback">{errors.hobby}</p>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="description">Description</label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      cols="20"
+                      rows="4"
+                      value={values.description}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={
+                        touched.description && errors.description
+                          ? "form-control is-invalid"
+                          : "form-control"
+                      }
+                    />
+                    {touched.description && errors.description && (
+                      <p className="invalid-feedback">{errors.description}</p>
+                    )}
+                  </div>
+                  <div className="form-check mb-3">
+                    <input
+                      type="checkbox"
+                      id="consentAccepted"
+                      name="consentAccepted"
+                      checked={values.consentAccepted}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={
+                        touched.consentAccepted && errors.consentAccepted
+                          ? "form-check-input is-invalid"
+                          : "form-check-input"
+                      }
+                    />
+                    <label
+                      htmlFor="consentAccepted"
+                      className="form-check-label"
+                    >
+                      Do you accept the privacy policy?
+                    </label>
+                    {touched.consentAccepted && errors.consentAccepted && (
+                      <p className="invalid-feedback">
+                        {errors.consentAccepted}
+                      </p>
+                    )}
+                  </div>
+                  <Button disabled={!isValid} submitButton>
+                    {isSubmitting ? "Submitting..." : "Submit"}
+                  </Button>
+                </form>
+              )}
+            </Formik>
+          </div>
+          {submitted && <Redirect to={HOME} />}
+        </section>
+      </Main>
+    );
+  }
+}
+
+export default Profile;
+```
+
+Now lets create the `App` component that will render each path.
+
+```jsx
+import React, { Component } from "react";
+import { Route } from "react-router-dom";
+
+import Header from "./components/Header";
+
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
+
+import { HOME, PROFILE } from "./constants/routes";
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      users: [],
+    };
+
+    this.saveUser = this.saveUser.bind(this);
+  }
+
+  saveUser(userData) {
+    this.setState((prevState) => ({
+      users: [...prevState.users, userData],
+    }));
+  }
+
+  render() {
+    const { users } = this.state;
+
+    return (
+      <>
+        <Header />
+        <Route
+          exact
+          path={HOME}
+          render={(routeProps) => <Home users={users} {...routeProps} />}
+        />
+        <Route
+          exact
+          path={PROFILE}
+          render={(routeProps) => (
+            <Profile saveUser={this.saveUser} {...routeProps} />
+          )}
+        />
+      </>
     );
   }
 }
