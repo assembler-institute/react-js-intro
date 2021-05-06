@@ -1,9 +1,15 @@
 import React from "react";
 
-function Button({ submitButton, disabled = false, children, ...props }) {
+function Button({
+  additionalClasses = "",
+  submitButton,
+  disabled = false,
+  children,
+  ...props
+}) {
   return (
     <button
-      className="btn btn-primary"
+      className={`btn btn-primary ${additionalClasses}`}
       type={submitButton ? "submit" : "button"}
       disabled={disabled}
       {...props}

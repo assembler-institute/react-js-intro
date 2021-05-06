@@ -95,6 +95,10 @@ $ git checkout -b <new_branch_name> <remote_branch_name>
 - [Part V. React Router Intro](#part-v-react-router-intro)
 - [Quick Start](#quick-start)
 - [BrowserRouter](#browserrouter)
+- [Higher-Order Components](#higher-order-components)
+- [Use HOCs For Cross-Cutting Concerns](#use-hocs-for-cross-cutting-concerns)
+- [A First Example: `withData(Component)`](#a-first-example-withdatacomponent)
+- [A Second Example: `withAuth(Component)`](#a-second-example-withauthcomponent)
 - [Learn More About Create React App](#learn-more-about-create-react-app)
 
 ---
@@ -2497,6 +2501,318 @@ class App extends Component {
           path={PROFILE}
           render={(routeProps) => (
             <Profile saveUser={this.saveUser} {...routeProps} />
+          )}
+        />
+      </>
+    );
+  }
+}
+
+export default App;
+```
+
+## Higher-Order Components
+
+**From the: [React.js docs](https://reactjs.org/docs/higher-order-components.html)**
+
+_A higher-order component (HOC) is an advanced technique in React for reusing component logic. HOCs are not part of the React API, per se. They are a pattern that emerges from React’s compositional nature._
+
+_Concretely, a higher-order component is a function that takes a component and returns a new component._
+
+```jsx
+const EnhancedComponent = higherOrderComponent(WrappedComponent);
+```
+
+_Whereas a component transforms props into UI, a higher-order component transforms a component into another component._
+
+## Use HOCs For Cross-Cutting Concerns
+
+Higher-Order Components are especially useful for eliminating duplicate code because we can define the logic in a HOC that receives the component that we want to receive it.
+
+This way we simply inject the data or information that the component needs as a prop from the Higher-Order Component and we can avoid duplicate code and logic because it is encapsulated in our HOC.
+
+**@see:** [Docs](https://reactjs.org/docs/higher-order-components.html#use-hocs-for-cross-cutting-concerns)
+
+## A First Example: `withData(Component)`
+
+In this case we will build a `withData(Component)` HOC that injects data in a component with the different loading states and errors.
+
+First, lets build our `withData` hoc:
+
+```jsx
+import React, { Component } from "react";
+
+import getDisplayName from "../utils/getDisplayName";
+
+function withData(WrappedComponent, request) {
+  class WrapperComponent extends Component {
+    constructor(props) {
+      super(props);
+
+      this.state = {
+        data: [],
+        isLoading: false,
+        hasError: false,
+        errorMessage: null,
+      };
+
+      this.loadData = this.loadData.bind(this);
+    }
+
+    componentDidMount() {
+      this.loadData();
+    }
+
+    async loadData() {
+      this.setState({
+        isLoading: true,
+      });
+
+      try {
+        const data = await request();
+
+        this.setState({
+          isLoading: false,
+          data: data,
+        });
+      } catch (error) {
+        this.setState({
+          isLoading: false,
+          hasError: true,
+          errorMessage: error.message,
+        });
+      }
+    }
+
+    render() {
+      const { data, isLoading, hasError, errorMessage } = this.state;
+
+      return (
+        <WrappedComponent
+          data={data}
+          isLoading={isLoading}
+          hasError={hasError}
+          errorMessage={errorMessage}
+          {...this.props}
+        />
+      );
+    }
+  }
+
+  WrapperComponent.displayName = getDisplayName(`withData(WrapperComponent)`);
+
+  return WrapperComponent;
+}
+
+export default withData;
+```
+
+And our `Users` page with the props:
+
+```jsx
+import React from "react";
+import axios from "axios";
+
+import Main from "../../components/Main";
+import withData from "../../hoc/withData";
+
+function request() {
+  return axios
+    .get("https://jsonplaceholder.typicode.com/users")
+    .then((response) => response.data);
+}
+
+function Users({ data = [], isLoading, hasError, errorMessage }) {
+  return (
+    <Main>
+      <div className="row">
+        <div className="col col-12">
+          <h1>Users</h1>
+        </div>
+        <div className="col col-12 mb-3">
+          <hr />
+        </div>
+
+        {hasError && (
+          <div className="col col-12">
+            <h3 className="h6">Something went wrong...</h3>
+            <pre className="mb-4">
+              <code>{errorMessage}</code>
+            </pre>
+            <hr />
+          </div>
+        )}
+
+        {isLoading && (
+          <>
+            <div className="col col-12">
+              <h3 className="h6">Loading data...</h3>
+            </div>
+            <div className="col col-12 mt-2">
+              <hr />
+            </div>
+          </>
+        )}
+
+        {data.length > 0 &&
+          data.map((user) => (
+            <div key={user.id} className="col col-12">
+              <h3 className="h6">{user.name}</h3>
+            </div>
+          ))}
+      </div>
+    </Main>
+  );
+}
+
+export default withData(Users, request);
+```
+
+## A Second Example: `withAuth(Component)`
+
+In this case we will build a `withAuth(Component)` HOC that uses the `Redirect` component from the `react-router-dom` library to redirect the user to the home page when the `isAuthenticated` prop is `false`.
+
+First, lets build our `withAuth` hoc:
+
+```jsx
+import React from "react";
+import { Redirect } from "react-router-dom";
+
+import getDisplayName from "../utils/getDisplayName";
+
+import { HOME } from "../constants/routes";
+
+function withAuth(WrappedComponent) {
+  function WrapperComponent({ isAuthenticated, ...props }) {
+    if (!isAuthenticated) {
+      return <Redirect to={HOME} />;
+    }
+    return <WrappedComponent {...props} />;
+  }
+
+  WrapperComponent.displayName = getDisplayName(`withAuth(WrapperComponent)`);
+
+  return WrapperComponent;
+}
+
+export default withAuth;
+```
+
+And our `PrivatePage` page:
+
+```jsx
+import React from "react";
+
+import Main from "../../components/Main";
+import withAuth from "../../hoc/withAuth";
+
+function PrivatePage() {
+  return (
+    <Main>
+      <div className="row">
+        <div className="col col-12">
+          <h1>A very private page</h1>
+        </div>
+        <div className="col col-12 mb-3">
+          <hr />
+        </div>
+        <div className="col col-12 mb-3">
+          <pre>
+            <code>
+              super important information in here{" "}
+              <span role="img" aria-label="see">
+                👀
+              </span>
+            </code>
+          </pre>
+        </div>
+      </div>
+    </Main>
+  );
+}
+
+export default withAuth(PrivatePage);
+```
+
+And our `App` component:
+
+```jsx
+import React, { Component } from "react";
+import { Route } from "react-router-dom";
+
+import Header from "./components/Header";
+
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
+import Users from "./pages/Users";
+import PrivatePage from "./pages/PrivatePage";
+
+import { HOME, PROFILE, USERS, PRIVATE } from "./constants/routes";
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      users: [],
+      isAuthenticated: false,
+    };
+
+    this.saveUser = this.saveUser.bind(this);
+    this.login = this.login.bind(this);
+    this.logout = this.logout.bind(this);
+  }
+
+  saveUser(userData) {
+    this.setState((prevState) => ({
+      users: [...prevState.users, userData],
+    }));
+  }
+
+  login() {
+    this.setState({
+      isAuthenticated: true,
+    });
+  }
+
+  logout() {
+    this.setState({
+      isAuthenticated: false,
+    });
+  }
+
+  render() {
+    const { users, isAuthenticated } = this.state;
+
+    return (
+      <>
+        <Header
+          isAuthenticated={isAuthenticated}
+          login={this.login}
+          logout={this.logout}
+        />
+        <Route
+          exact
+          path={HOME}
+          render={(routeProps) => <Home users={users} {...routeProps} />}
+        />
+        <Route
+          exact
+          path={PROFILE}
+          render={(routeProps) => (
+            <Profile saveUser={this.saveUser} {...routeProps} />
+          )}
+        />
+        <Route
+          exact
+          path={USERS}
+          render={(routeProps) => <Users {...routeProps} />}
+        />
+        <Route
+          exact
+          path={PRIVATE}
+          render={(routeProps) => (
+            <PrivatePage isAuthenticated={isAuthenticated} {...routeProps} />
           )}
         />
       </>
