@@ -95,7 +95,7 @@ $ git checkout -b <new_branch_name> <remote_branch_name>
 - [Part V. React Router Intro](#part-v-react-router-intro)
 - [Quick Start](#quick-start)
 - [BrowserRouter](#browserrouter)
-- [Higher-Order Components](#higher-order-components)
+- [Part VI. Higher-Order Components](#part-vi-higher-order-components)
 - [Use HOCs For Cross-Cutting Concerns](#use-hocs-for-cross-cutting-concerns)
 - [A First Example: `withData(Component)`](#a-first-example-withdatacomponent)
 - [A Second Example: `withAuth(Component)`](#a-second-example-withauthcomponent)
@@ -2511,7 +2511,7 @@ class App extends Component {
 export default App;
 ```
 
-## Higher-Order Components
+## Part VI. Higher-Order Components
 
 **From the: [React.js docs](https://reactjs.org/docs/higher-order-components.html)**
 
