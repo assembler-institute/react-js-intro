@@ -1,8 +1,8 @@
 import React from "react";
 import axios from "axios";
 
-import Main from "../../components/Main";
 import withData from "../../hoc/withData";
+import Layout from "../../components/Layout";
 
 function request() {
   return axios
@@ -10,9 +10,17 @@ function request() {
     .then((response) => response.data);
 }
 
-function Users({ data = [], isLoading, hasError, errorMessage }) {
+function Users({
+  auth,
+  login,
+  logout,
+  data = [],
+  isLoading,
+  hasError,
+  errorMessage,
+}) {
   return (
-    <Main>
+    <Layout auth={auth} login={login} logout={logout}>
       <div className="row">
         <div className="col col-12">
           <h1>Users</h1>
@@ -49,7 +57,7 @@ function Users({ data = [], isLoading, hasError, errorMessage }) {
             </div>
           ))}
       </div>
-    </Main>
+    </Layout>
   );
 }
 

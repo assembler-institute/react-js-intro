@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { HOME, PROFILE, USERS, PRIVATE } from "../../constants/routes";
 import Button from "../Button";
 
-function Header({ isAuthenticated, login, logout }) {
+function Header({ auth, login, logout }) {
   return (
     <header className="bg-light">
       <nav className="container navbar-expand py-2">
@@ -41,20 +41,20 @@ function Header({ isAuthenticated, login, logout }) {
             </NavLink>
           </div>
           <div className="ml-auto d-flex align-items-center">
-            {isAuthenticated ? (
+            {auth.isAuthenticated ? (
               <p className="m-0">hello</p>
             ) : (
               <p className="m-0">please login</p>
             )}
             <div className="ml-3">
               <Button
-                disabled={isAuthenticated}
+                disabled={auth.isAuthenticated}
                 additionalClasses="mr-2"
                 onClick={login}
               >
                 Login
               </Button>
-              <Button disabled={!isAuthenticated} onClick={logout}>
+              <Button disabled={!auth.isAuthenticated} onClick={logout}>
                 Logout
               </Button>
             </div>

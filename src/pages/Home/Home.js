@@ -1,10 +1,10 @@
 import React from "react";
 
-import Main from "../../components/Main";
+import Layout from "../../components/Layout";
 
-function Home({ users }) {
+function Home({ users, auth, login, logout }) {
   return (
-    <Main>
+    <Layout auth={auth} login={login} logout={logout}>
       <div className="row">
         <div className="col col-12">
           <h1>Home</h1>
@@ -37,7 +37,7 @@ function Home({ users }) {
           </>
         )}
       </div>
-    </Main>
+    </Layout>
   );
 }
 

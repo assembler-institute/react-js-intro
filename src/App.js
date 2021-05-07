@@ -1,84 +1,62 @@
-import React, { Component } from "react";
-import { Route } from "react-router-dom";
-
-import Header from "./components/Header";
+import React, { useState } from "react";
+import { Route, Switch } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Users from "./pages/Users";
 import PrivatePage from "./pages/PrivatePage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import { HOME, PROFILE, USERS, PRIVATE } from "./constants/routes";
 
-class App extends Component {
-  constructor(props) {
-    super(props);
+function App() {
+  const [users, setUsers] = useState([]);
+  const [auth, setAuth] = useState({
+    user: null,
+    isAuthenticated: false,
+  });
 
-    this.state = {
-      users: [],
-      isAuthenticated: false,
-    };
-
-    this.saveUser = this.saveUser.bind(this);
-    this.login = this.login.bind(this);
-    this.logout = this.logout.bind(this);
+  function saveUser(userData) {
+    setUsers((prevState) => [...prevState, userData]);
   }
 
-  saveUser(userData) {
-    this.setState((prevState) => ({
-      users: [...prevState.users, userData],
+  function login() {
+    setAuth((prevState) => ({
+      ...prevState,
+      isAuthenticated: true,
     }));
   }
 
-  login() {
-    this.setState({
-      isAuthenticated: true,
-    });
-  }
-
-  logout() {
-    this.setState({
+  function logout() {
+    setAuth((prevState) => ({
+      ...prevState,
       isAuthenticated: false,
-    });
+    }));
   }
 
-  render() {
-    const { users, isAuthenticated } = this.state;
+  return (
+    <Switch>
+      <Route path={PROFILE}>
+        <Profile
+          auth={auth}
+          login={login}
+          logout={logout}
+          saveUser={saveUser}
+        />
+      </Route>
+      <Route path={USERS}>
+        <Users auth={auth} login={login} logout={logout} users={users} />
+      </Route>
 
-    return (
-      <>
-        <Header
-          isAuthenticated={isAuthenticated}
-          login={this.login}
-          logout={this.logout}
-        />
-        <Route
-          exact
-          path={HOME}
-          render={(routeProps) => <Home users={users} {...routeProps} />}
-        />
-        <Route
-          exact
-          path={PROFILE}
-          render={(routeProps) => (
-            <Profile saveUser={this.saveUser} {...routeProps} />
-          )}
-        />
-        <Route
-          exact
-          path={USERS}
-          render={(routeProps) => <Users {...routeProps} />}
-        />
-        <Route
-          exact
-          path={PRIVATE}
-          render={(routeProps) => (
-            <PrivatePage isAuthenticated={isAuthenticated} {...routeProps} />
-          )}
-        />
-      </>
-    );
-  }
+      <ProtectedRoute auth={auth} path={PRIVATE}>
+        <PrivatePage auth={auth} login={login} logout={logout} />
+      </ProtectedRoute>
+
+      <Route path={HOME} exact>
+        <Home auth={auth} login={login} logout={logout} users={users} />
+      </Route>
+    </Switch>
+  );
 }
 
 export default App;

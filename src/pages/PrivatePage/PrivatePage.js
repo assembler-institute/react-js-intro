@@ -1,11 +1,10 @@
 import React from "react";
 
-import Main from "../../components/Main";
-import withAuth from "../../hoc/withAuth";
+import Layout from "../../components/Layout";
 
-function PrivatePage() {
+function PrivatePage({ auth, login, logout }) {
   return (
-    <Main>
+    <Layout auth={auth} login={login} logout={logout}>
       <div className="row">
         <div className="col col-12">
           <h1>A very private page</h1>
@@ -24,8 +23,8 @@ function PrivatePage() {
           </pre>
         </div>
       </div>
-    </Main>
+    </Layout>
   );
 }
 
-export default withAuth(PrivatePage);
+export default PrivatePage;

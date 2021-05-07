@@ -99,6 +99,8 @@ $ git checkout -b <new_branch_name> <remote_branch_name>
 - [Use HOCs For Cross-Cutting Concerns](#use-hocs-for-cross-cutting-concerns)
 - [A First Example: `withData(Component)`](#a-first-example-withdatacomponent)
 - [A Second Example: `withAuth(Component)`](#a-second-example-withauthcomponent)
+- [Part VII. React Context](#part-vii-react-context)
+- [Avoiding Prop Drilling With React Context](#avoiding-prop-drilling-with-react-context)
 - [Learn More About Create React App](#learn-more-about-create-react-app)
 
 ---
@@ -2823,6 +2825,311 @@ class App extends Component {
 }
 
 export default App;
+```
+
+## Part VII. React Context
+
+React Context provides a way to pass data through the component tree without having to pass props down manually at every level.
+
+In a typical React application, data is passed top-down (parent to child) via props, but this can be cumbersome for certain types of props (e.g. locale preference, UI theme) that are required by many components within an application.
+
+React Context provides a way to share values like these between components without having to explicitly pass a prop through every level of the tree.
+
+### When to Use React Context
+
+Context is designed to share data that can be considered “global” for a tree of React components, such as the current authenticated user, theme, or preferred language.
+
+### Prop Drilling 😢
+
+One of the main benefits of using React Context is that it allows us to solve what is known as **Prop Drilling**.
+
+If we take a look at our `<App />` component we can see that it is forwarding an `auth` state prop to the child components using prop drilling.
+
+```jsx
+<Switch>
+  <Route path={PROFILE}>
+    <Profile auth={auth} login={login} logout={logout} saveUser={saveUser} />
+  </Route>
+  <Route path={USERS}>
+    <Users auth={auth} login={login} logout={logout} users={users} />
+  </Route>
+
+  <ProtectedRoute auth={auth} path={PRIVATE}>
+    <PrivatePage auth={auth} login={login} logout={logout} />
+  </ProtectedRoute>
+
+  <Route path={HOME} exact>
+    <Home auth={auth} login={login} logout={logout} users={users} />
+  </Route>
+</Switch>
+```
+
+The `auth` prop has to be passed to the `<Header />` component throughout the different component levels of our app.
+
+```jsx
+function Home({ users, auth, login, logout }) {
+  return (
+    <Layout auth={auth} login={login} logout={logout}>
+      {/* ... */}
+    </Layout>
+  );
+```
+
+## Avoiding Prop Drilling With React Context
+
+In order to solve this issue we can use React Context to provide all the data that our child components need from a common parent component.
+
+### Creating a Context
+
+To get started, we just need to create a context for the auth state.
+
+This is the simplest way to create a context in React, without any default values.
+
+```jsx
+// src/context/auth-context.js
+
+import { createContext } from "react";
+
+const AuthContext = createContext();
+
+export default AuthContext;
+```
+
+However, it is much better to include a default value to the context so that it can pick it up when the consumer doesn't find a provider in the component hierarchy.
+
+This is also useful in testing.
+
+```jsx
+// src/context/auth-context.js
+
+import { createContext } from "react";
+
+const AuthContext = createContext({
+  user: null,
+  isAuthenticated: false,
+  login: () => {},
+  logout: () => {},
+});
+
+export default AuthContext;
+```
+
+### Using our AuthContext
+
+Now that we have created the context, we can use it in out components.
+
+First, we will need to render a `AuthContext.Provider` in our `App` component.
+
+Also note how much duplicate code we can remove.
+
+```jsx
+// src/App.js
+
+import React, { useState } from "react";
+import { Route, Switch } from "react-router-dom";
+
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
+import Users from "./pages/Users";
+import PrivatePage from "./pages/PrivatePage";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+import { HOME, PROFILE, USERS, PRIVATE } from "./constants/routes";
+
+import AuthContext from "./context/auth-context";
+
+function App() {
+  const [users, setUsers] = useState([]);
+  const [auth, setAuth] = useState({
+    user: null,
+    isAuthenticated: false,
+  });
+
+  function saveUser(userData) {
+    setUsers((prevState) => [...prevState, userData]);
+  }
+
+  function login() {
+    setAuth((prevState) => ({
+      ...prevState,
+      isAuthenticated: true,
+    }));
+  }
+
+  function logout() {
+    setAuth((prevState) => ({
+      ...prevState,
+      isAuthenticated: false,
+    }));
+  }
+
+  return (
+    <AuthContext.Provider value={{ auth: auth, login: login, logout: logout }}>
+      <Switch>
+        <Route path={PROFILE}>
+          <Profile saveUser={saveUser} />
+        </Route>
+        <Route path={USERS}>
+          <Users users={users} />
+        </Route>
+
+        <ProtectedRoute path={PRIVATE}>
+          <PrivatePage />
+        </ProtectedRoute>
+
+        <Route path={HOME} exact>
+          <Home users={users} />
+        </Route>
+      </Switch>
+    </AuthContext.Provider>
+  );
+}
+
+export default App;
+```
+
+We also need to update all the components that were passing through the `auth` prop to child components.
+
+Files affected:
+
+```sh
+ src/components/Header/Header.js
+ src/components/Layout/Layout.js
+ src/components/ProtectedRoute/ProtectedRoute.js
+ src/pages/Home/Home.js
+ src/pages/PrivatePage/PrivatePage.js
+ src/pages/Profile/Profile.js
+ src/pages/Users/Users.js
+```
+
+```diff
+--- a/src/components/Header/Header.js
++++ b/src/components/Header/Header.js
+@@ -1,10 +1,13 @@
+-import React from "react";
++import React, { useContext } from "react";
+ import { NavLink } from "react-router-dom";
+
+ import { HOME, PROFILE, USERS, PRIVATE } from "../../constants/routes";
++import AuthContext from "../../context/auth-context";
+ import Button from "../Button";
+
+-function Header({ auth, login, logout }) {
++function Header() {
++  const { auth, login, logout } = useContext(AuthContext);
++
+   return (
+     <header className="bg-light">
+       <nav className="container navbar-expand py-2">
+
+--- a/src/components/Layout/Layout.js
++++ b/src/components/Layout/Layout.js
+@@ -3,10 +3,10 @@ import React from "react";
+ import Header from "../Header";
+ import Main from "../Main";
+
+-function Layout({ auth, login, logout, children, ...props }) {
++function Layout({ children, ...props }) {
+   return (
+     <>
+-      <Header auth={auth} login={login} logout={logout} />
++      <Header />
+       <Main className="container mt-4" {...props}>
+         {children}
+       </Main>
+diff --git a/src/components/ProtectedRoute/ProtectedRoute.js b/src/components/ProtectedRoute/ProtectedRoute.js
+index 083382f..a1288d3 100644
+--- a/src/components/ProtectedRoute/ProtectedRoute.js
++++ b/src/components/ProtectedRoute/ProtectedRoute.js
+@@ -1,9 +1,12 @@
+-import React from "react";
++import React, { useContext } from "react";
+ import { Redirect, Route } from "react-router-dom";
+
+ import { HOME } from "../../constants/routes";
++import AuthContext from "../../context/auth-context";
++
++function ProtectedRoute({ children, ...props }) {
++  const { auth } = useContext(AuthContext);
+
+-function ProtectedRoute({ auth, children, ...props }) {
+   return (
+     <Route
+       {...props}
+diff --git a/src/pages/Home/Home.js b/src/pages/Home/Home.js
+index b4e6ac9..7cc98a3 100644
+--- a/src/pages/Home/Home.js
++++ b/src/pages/Home/Home.js
+@@ -2,9 +2,9 @@ import React from "react";
+
+ import Layout from "../../components/Layout";
+
+-function Home({ users, auth, login, logout }) {
++function Home({ users }) {
+   return (
+-    <Layout auth={auth} login={login} logout={logout}>
++    <Layout>
+       <div className="row">
+         <div className="col col-12">
+           <h1>Home</h1>
+diff --git a/src/pages/PrivatePage/PrivatePage.js b/src/pages/PrivatePage/PrivatePage.js
+index 11b3b1f..ac4c2dc 100644
+--- a/src/pages/PrivatePage/PrivatePage.js
++++ b/src/pages/PrivatePage/PrivatePage.js
+@@ -2,9 +2,9 @@ import React from "react";
+
+ import Layout from "../../components/Layout";
+
+-function PrivatePage({ auth, login, logout }) {
++function PrivatePage() {
+   return (
+-    <Layout auth={auth} login={login} logout={logout}>
++    <Layout>
+       <div className="row">
+         <div className="col col-12">
+           <h1>A very private page</h1>
+diff --git a/src/pages/Profile/Profile.js b/src/pages/Profile/Profile.js
+index 14f42c2..2eb7886 100644
+--- a/src/pages/Profile/Profile.js
++++ b/src/pages/Profile/Profile.js
+@@ -6,11 +6,11 @@ import { HOME } from "../../constants/routes";
+ import Layout from "../../components/Layout";
+ import ProfileForm from "../../components/ProfileForm";
+
+-function Profile({ auth, login, logout, saveUser }) {
++function Profile({ saveUser }) {
+   const [submitted, setSubmitted] = useState(false);
+
+   return (
+-    <Layout auth={auth} login={login} logout={logout}>
++    <Layout>
+       <section className="row">
+         <div className="col col-12">
+           <h1>Your profile</h1>
+diff --git a/src/pages/Users/Users.js b/src/pages/Users/Users.js
+index 38a454e..7bc1796 100644
+--- a/src/pages/Users/Users.js
++++ b/src/pages/Users/Users.js
+@@ -10,17 +10,9 @@ function request() {
+     .then((response) => response.data);
+ }
+
+-function Users({
+-  auth,
+-  login,
+-  logout,
+-  data = [],
+-  isLoading,
+-  hasError,
+-  errorMessage,
+-}) {
++function Users({ data = [], isLoading, hasError, errorMessage }) {
+   return (
+-    <Layout auth={auth} login={login} logout={logout}>
++    <Layout>
+       <div className="row">
+         <div className="col col-12">
+           <h1>Users</h1>
 ```
 
 ## Learn More About Create React App
