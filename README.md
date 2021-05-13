@@ -102,6 +102,7 @@ $ git checkout -b <new_branch_name> <remote_branch_name>
 - [Part VII. React Context](#part-vii-react-context)
 - [Avoiding Prop Drilling With React Context](#avoiding-prop-drilling-with-react-context)
 - [`Context.Consumer`](#contextconsumer)
+- [Using Multiple Contexts](#using-multiple-contexts)
 - [Learn More About Create React App](#learn-more-about-create-react-app)
 
 ---
@@ -3231,6 +3232,210 @@ function Header() {
               </div>
             )}
           </AuthContext.Consumer>
+        </div>
+      </nav>
+    </header>
+  );
+}
+
+export default Header;
+```
+
+## Using Multiple Contexts
+
+For this example, let's create a locale context that stores the current language of our app.
+
+```jsx
+// src/context-locale-context.js
+import { createContext } from "react";
+
+const LocaleContext = createContext({
+  locale: "en",
+  toggleLocale: () => {},
+});
+
+export default LocaleContext;
+```
+
+Next, we will create a `LocaleContextProvider` component that renders a `LocaleContext.Provider` and wraps the children it receives with the context value. This way we can avoid having to use the .Provider in our components and we can encapsulate the logic in the `LocaleContextProvider` component.
+
+```jsx
+// src/components/LocaleContextProvider
+import React, { useState } from "react";
+
+import LocaleContext from "../../context/locale-context";
+
+function LocaleContextProvider({ children }) {
+  const [locale, setLocale] = useState("en");
+
+  function toggleLocale() {
+    if (locale === "en") {
+      setLocale("es");
+    } else {
+      setLocale("en");
+    }
+  }
+
+  return (
+    <LocaleContext.Provider
+      value={{
+        locale: locale,
+        toggleLocale: toggleLocale,
+      }}
+    >
+      {children}
+    </LocaleContext.Provider>
+  );
+}
+
+export default LocaleContextProvider;
+```
+
+Now, our `<App />` component looks like this:
+
+```jsx
+import React, { useState } from "react";
+import { Route, Switch } from "react-router-dom";
+
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
+import Users from "./pages/Users";
+import PrivatePage from "./pages/PrivatePage";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+import { HOME, PROFILE, USERS, PRIVATE } from "./constants/routes";
+
+import AuthContext from "./context/auth-context";
+import LocaleContextProvider from "./components/LocaleContextProvider";
+
+function App() {
+  const [users, setUsers] = useState([]);
+  const [auth, setAuth] = useState({
+    user: null,
+    isAuthenticated: false,
+  });
+
+  function saveUser(userData) {
+    setUsers((prevState) => [...prevState, userData]);
+  }
+
+  function login() {
+    setAuth((prevState) => ({
+      ...prevState,
+      isAuthenticated: true,
+    }));
+  }
+
+  function logout() {
+    setAuth((prevState) => ({
+      ...prevState,
+      isAuthenticated: false,
+    }));
+  }
+
+  return (
+    <LocaleContextProvider>
+      <AuthContext.Provider
+        value={{ auth: auth, login: login, logout: logout }}
+      >
+        <Switch>
+          <Route path={PROFILE}>
+            <Profile saveUser={saveUser} />
+          </Route>
+          <Route path={USERS}>
+            <Users users={users} />
+          </Route>
+
+          <ProtectedRoute path={PRIVATE}>
+            <PrivatePage />
+          </ProtectedRoute>
+
+          <Route path={HOME} exact>
+            <Home users={users} />
+          </Route>
+        </Switch>
+      </AuthContext.Provider>
+    </LocaleContextProvider>
+  );
+}
+
+export default App;
+```
+
+In order to use our context values in the `Header` component we do it in the following way:
+
+```jsx
+import React, { useContext } from "react";
+import { NavLink } from "react-router-dom";
+
+import { HOME, PROFILE, USERS, PRIVATE } from "../../constants/routes";
+import AuthContext from "../../context/auth-context";
+import LocaleContext from "../../context/locale-context";
+import Button from "../Button";
+
+function Header() {
+  const { auth, login, logout } = useContext(AuthContext);
+  const { locale, toggleLocale } = useContext(LocaleContext);
+
+  return (
+    <header className="bg-light">
+      <nav className="container navbar-expand py-2">
+        <div className="d-flex align-items-center">
+          <div className="nav nav-pills">
+            <NavLink
+              className="nav-item nav-link"
+              to={HOME}
+              exact
+              activeClassName="active"
+            >
+              {locale === "en" ? "Home" : "Inicio"}
+            </NavLink>
+            <NavLink
+              className="nav-item nav-link"
+              to={PROFILE}
+              activeClassName="active"
+            >
+              {locale === "en" ? "Profile" : "Perfíl"}
+            </NavLink>
+            <NavLink
+              className="nav-item nav-link"
+              to={USERS}
+              activeClassName="active"
+            >
+              {locale === "en" ? "Users" : "Usuarios"}
+            </NavLink>
+            <NavLink
+              className="nav-item nav-link"
+              to={PRIVATE}
+              activeClassName="active"
+            >
+              {locale === "en" ? "Private page" : "Página privada"}
+            </NavLink>
+          </div>
+          <div className="ml-auto d-flex align-items-center">
+            {auth.isAuthenticated ? (
+              <p className="m-0">{locale === "en" ? "hello" : "hola"}</p>
+            ) : (
+              <p className="m-0">
+                {locale === "en" ? "please login" : "por favor inicia sesión"}
+              </p>
+            )}
+            <div className="mr-3 ml-3">
+              <Button
+                disabled={auth.isAuthenticated}
+                additionalClasses="mr-2"
+                onClick={login}
+              >
+                {locale === "en" ? "Login" : "Iniciar sesión"}
+              </Button>
+              <Button disabled={!auth.isAuthenticated} onClick={logout}>
+                {locale === "en" ? "Logout" : "Cerrar sesión"}
+              </Button>
+            </div>
+            <Button onClick={toggleLocale}>
+              {locale === "en" ? "English" : "Español"}
+            </Button>
+          </div>
         </div>
       </nav>
     </header>
