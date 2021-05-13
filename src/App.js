@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { HOME, PROFILE, USERS, PRIVATE } from "./constants/routes";
 
 import AuthContext from "./context/auth-context";
+import LocaleContextProvider from "./components/LocaleContextProvider";
 
 function App() {
   const [users, setUsers] = useState([]);
@@ -37,24 +38,28 @@ function App() {
   }
 
   return (
-    <AuthContext.Provider value={{ auth: auth, login: login, logout: logout }}>
-      <Switch>
-        <Route path={PROFILE}>
-          <Profile saveUser={saveUser} />
-        </Route>
-        <Route path={USERS}>
-          <Users users={users} />
-        </Route>
+    <LocaleContextProvider>
+      <AuthContext.Provider
+        value={{ auth: auth, login: login, logout: logout }}
+      >
+        <Switch>
+          <Route path={PROFILE}>
+            <Profile saveUser={saveUser} />
+          </Route>
+          <Route path={USERS}>
+            <Users users={users} />
+          </Route>
 
-        <ProtectedRoute path={PRIVATE}>
-          <PrivatePage />
-        </ProtectedRoute>
+          <ProtectedRoute path={PRIVATE}>
+            <PrivatePage />
+          </ProtectedRoute>
 
-        <Route path={HOME} exact>
-          <Home users={users} />
-        </Route>
-      </Switch>
-    </AuthContext.Provider>
+          <Route path={HOME} exact>
+            <Home users={users} />
+          </Route>
+        </Switch>
+      </AuthContext.Provider>
+    </LocaleContextProvider>
   );
 }
 

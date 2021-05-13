@@ -3,10 +3,12 @@ import { NavLink } from "react-router-dom";
 
 import { HOME, PROFILE, USERS, PRIVATE } from "../../constants/routes";
 import AuthContext from "../../context/auth-context";
+import LocaleContext from "../../context/locale-context";
 import Button from "../Button";
 
 function Header() {
   const { auth, login, logout } = useContext(AuthContext);
+  const { locale, toggleLocale } = useContext(LocaleContext);
 
   return (
     <header className="bg-light">
@@ -19,48 +21,53 @@ function Header() {
               exact
               activeClassName="active"
             >
-              Home
+              {locale === "en" ? "Home" : "Inicio"}
             </NavLink>
             <NavLink
               className="nav-item nav-link"
               to={PROFILE}
               activeClassName="active"
             >
-              Profile
+              {locale === "en" ? "Profile" : "Perfíl"}
             </NavLink>
             <NavLink
               className="nav-item nav-link"
               to={USERS}
               activeClassName="active"
             >
-              Users
+              {locale === "en" ? "Users" : "Usuarios"}
             </NavLink>
             <NavLink
               className="nav-item nav-link"
               to={PRIVATE}
               activeClassName="active"
             >
-              Private page
+              {locale === "en" ? "Private page" : "Página privada"}
             </NavLink>
           </div>
           <div className="ml-auto d-flex align-items-center">
             {auth.isAuthenticated ? (
-              <p className="m-0">hello</p>
+              <p className="m-0">{locale === "en" ? "hello" : "hola"}</p>
             ) : (
-              <p className="m-0">please login</p>
+              <p className="m-0">
+                {locale === "en" ? "please login" : "por favor inicia sesión"}
+              </p>
             )}
-            <div className="ml-3">
+            <div className="mr-3 ml-3">
               <Button
                 disabled={auth.isAuthenticated}
                 additionalClasses="mr-2"
                 onClick={login}
               >
-                Login
+                {locale === "en" ? "Login" : "Iniciar sesión"}
               </Button>
               <Button disabled={!auth.isAuthenticated} onClick={logout}>
-                Logout
+                {locale === "en" ? "Logout" : "Cerrar sesión"}
               </Button>
             </div>
+            <Button onClick={toggleLocale}>
+              {locale === "en" ? "English" : "Español"}
+            </Button>
           </div>
         </div>
       </nav>
