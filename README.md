@@ -1603,8 +1603,9 @@ class App extends Component {
 
     this.handleFullNameChange = this.handleFullNameChange.bind(this);
     this.handleAgeChange = this.handleAgeChange.bind(this);
-    this.handleConsentAcceptedChange =
-      this.handleConsentAcceptedChange.bind(this);
+    this.handleConsentAcceptedChange = this.handleConsentAcceptedChange.bind(
+      this
+    );
     this.handleHobbyChange = this.handleHobbyChange.bind(this);
     this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -1649,8 +1650,14 @@ class App extends Component {
   }
 
   render() {
-    const { fullName, age, consentAccepted, hobby, description, submitted } =
-      this.state;
+    const {
+      fullName,
+      age,
+      consentAccepted,
+      hobby,
+      description,
+      submitted,
+    } = this.state;
 
     return (
       <Main>
@@ -1776,8 +1783,9 @@ class App extends Component {
 
     this.handleChange = this.handleChange.bind(this);
     this.handleAgeChange = this.handleAgeChange.bind(this);
-    this.handleConsentAcceptedChange =
-      this.handleConsentAcceptedChange.bind(this);
+    this.handleConsentAcceptedChange = this.handleConsentAcceptedChange.bind(
+      this
+    );
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
@@ -1808,8 +1816,14 @@ class App extends Component {
   }
 
   render() {
-    const { fullName, age, consentAccepted, hobby, description, submitted } =
-      this.state;
+    const {
+      fullName,
+      age,
+      consentAccepted,
+      hobby,
+      description,
+      submitted,
+    } = this.state;
 
     return (
       <Main>
@@ -1959,8 +1973,9 @@ class App extends Component {
 
     this.handleChange = this.handleChange.bind(this);
     this.handleAgeChange = this.handleAgeChange.bind(this);
-    this.handleConsentAcceptedChange =
-      this.handleConsentAcceptedChange.bind(this);
+    this.handleConsentAcceptedChange = this.handleConsentAcceptedChange.bind(
+      this
+    );
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
@@ -1991,8 +2006,14 @@ class App extends Component {
   }
 
   render() {
-    const { fullName, age, consentAccepted, hobby, description, submitted } =
-      this.state;
+    const {
+      fullName,
+      age,
+      consentAccepted,
+      hobby,
+      description,
+      submitted,
+    } = this.state;
 
     return (
       <Main>
