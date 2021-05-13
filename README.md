@@ -3257,7 +3257,7 @@ const LocaleContext = createContext({
 export default LocaleContext;
 ```
 
-Next, we will create a `LocaleContextProvider` component that renders a `LocaleContext.Provider` and wraps the children it receives with the context value. This way we can avoid having to use the .Provider in our components and we can encapsulate the logic in the `LocaleContextProvider` component.
+Next, we will create a `LocaleContextProvider` component that renders a `LocaleContext.Provider` and wraps the children it receives with the context value. This way we can avoid having to use the `Context.Provider` in our components and we can encapsulate the logic in the `LocaleContextProvider` component.
 
 ```jsx
 // src/components/LocaleContextProvider
