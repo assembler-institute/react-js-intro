@@ -101,6 +101,7 @@ $ git checkout -b <new_branch_name> <remote_branch_name>
 - [A Second Example: `withAuth(Component)`](#a-second-example-withauthcomponent)
 - [Part VII. React Context](#part-vii-react-context)
 - [Avoiding Prop Drilling With React Context](#avoiding-prop-drilling-with-react-context)
+- [`Context.Consumer`](#contextconsumer)
 - [Learn More About Create React App](#learn-more-about-create-react-app)
 
 ---
@@ -3130,6 +3131,111 @@ index 38a454e..7bc1796 100644
        <div className="row">
          <div className="col col-12">
            <h1>Users</h1>
+```
+
+### Using the `useContext()` Hook Correctly
+
+One important thing to consider it how we need to use the `useContext()` hook:
+
+**✅ Wright way to use the context hook**
+
+```jsx
+const locale = useContext(LocaleContext);
+const posts = useContext(PostsContext);
+```
+
+**⚠️ Wrong way to use the context hook**
+
+```jsx
+const locale = useContext(LocaleContext.Provider);
+const posts = useContext(PostsContext.Provider);
+```
+
+**This way is also wrong:**
+
+```jsx
+const locale = useContext(LocaleContext.Consumer);
+const posts = useContext(PostsContext.Consumer);
+```
+
+## `Context.Consumer`
+
+Another way to subscribe to a context provider is to use the `Context.Consumer` api that uses render props.
+
+```jsx
+import React from "react";
+import { NavLink } from "react-router-dom";
+
+import { HOME, PROFILE, USERS, PRIVATE } from "../../constants/routes";
+import AuthContext from "../../context/auth-context";
+import Button from "../Button";
+
+function Header() {
+  return (
+    <header className="bg-light">
+      <nav className="container navbar-expand py-2">
+        <div className="d-flex align-items-center">
+          <div className="nav nav-pills">
+            <NavLink
+              className="nav-item nav-link"
+              to={HOME}
+              exact
+              activeClassName="active"
+            >
+              Home
+            </NavLink>
+            <NavLink
+              className="nav-item nav-link"
+              to={PROFILE}
+              activeClassName="active"
+            >
+              Profile
+            </NavLink>
+            <NavLink
+              className="nav-item nav-link"
+              to={USERS}
+              activeClassName="active"
+            >
+              Users
+            </NavLink>
+            <NavLink
+              className="nav-item nav-link"
+              to={PRIVATE}
+              activeClassName="active"
+            >
+              Private page
+            </NavLink>
+          </div>
+          <AuthContext.Consumer>
+            {({ auth, login, logout }) => (
+              <div className="ml-auto d-flex align-items-center">
+                {auth.isAuthenticated ? (
+                  <p className="m-0">hello</p>
+                ) : (
+                  <p className="m-0">please login</p>
+                )}
+                <div className="ml-3">
+                  <Button
+                    disabled={auth.isAuthenticated}
+                    additionalClasses="mr-2"
+                    onClick={login}
+                  >
+                    Login
+                  </Button>
+                  <Button disabled={!auth.isAuthenticated} onClick={logout}>
+                    Logout
+                  </Button>
+                </div>
+              </div>
+            )}
+          </AuthContext.Consumer>
+        </div>
+      </nav>
+    </header>
+  );
+}
+
+export default Header;
 ```
 
 ## Learn More About Create React App
