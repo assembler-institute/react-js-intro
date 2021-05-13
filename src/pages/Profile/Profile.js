@@ -6,11 +6,11 @@ import { HOME } from "../../constants/routes";
 import Layout from "../../components/Layout";
 import ProfileForm from "../../components/ProfileForm";
 
-function Profile({ auth, login, logout, saveUser }) {
+function Profile({ saveUser }) {
   const [submitted, setSubmitted] = useState(false);
 
   return (
-    <Layout auth={auth} login={login} logout={logout}>
+    <Layout>
       <section className="row">
         <div className="col col-12">
           <h1>Your profile</h1>

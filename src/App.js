@@ -9,6 +9,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 import { HOME, PROFILE, USERS, PRIVATE } from "./constants/routes";
 
+import AuthContext from "./context/auth-context";
+
 function App() {
   const [users, setUsers] = useState([]);
   const [auth, setAuth] = useState({
@@ -35,27 +37,24 @@ function App() {
   }
 
   return (
-    <Switch>
-      <Route path={PROFILE}>
-        <Profile
-          auth={auth}
-          login={login}
-          logout={logout}
-          saveUser={saveUser}
-        />
-      </Route>
-      <Route path={USERS}>
-        <Users auth={auth} login={login} logout={logout} users={users} />
-      </Route>
+    <AuthContext.Provider value={{ auth: auth, login: login, logout: logout }}>
+      <Switch>
+        <Route path={PROFILE}>
+          <Profile saveUser={saveUser} />
+        </Route>
+        <Route path={USERS}>
+          <Users users={users} />
+        </Route>
 
-      <ProtectedRoute auth={auth} path={PRIVATE}>
-        <PrivatePage auth={auth} login={login} logout={logout} />
-      </ProtectedRoute>
+        <ProtectedRoute path={PRIVATE}>
+          <PrivatePage />
+        </ProtectedRoute>
 
-      <Route path={HOME} exact>
-        <Home auth={auth} login={login} logout={logout} users={users} />
-      </Route>
-    </Switch>
+        <Route path={HOME} exact>
+          <Home users={users} />
+        </Route>
+      </Switch>
+    </AuthContext.Provider>
   );
 }
 

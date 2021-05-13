@@ -10,17 +10,9 @@ function request() {
     .then((response) => response.data);
 }
 
-function Users({
-  auth,
-  login,
-  logout,
-  data = [],
-  isLoading,
-  hasError,
-  errorMessage,
-}) {
+function Users({ data = [], isLoading, hasError, errorMessage }) {
   return (
-    <Layout auth={auth} login={login} logout={logout}>
+    <Layout>
       <div className="row">
         <div className="col col-12">
           <h1>Users</h1>

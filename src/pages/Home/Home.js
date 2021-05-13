@@ -2,9 +2,9 @@ import React from "react";
 
 import Layout from "../../components/Layout";
 
-function Home({ users, auth, login, logout }) {
+function Home({ users }) {
   return (
-    <Layout auth={auth} login={login} logout={logout}>
+    <Layout>
       <div className="row">
         <div className="col col-12">
           <h1>Home</h1>

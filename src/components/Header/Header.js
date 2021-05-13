@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useContext } from "react";
 import { NavLink } from "react-router-dom";
 
 import { HOME, PROFILE, USERS, PRIVATE } from "../../constants/routes";
+import AuthContext from "../../context/auth-context";
 import Button from "../Button";
 
-function Header({ auth, login, logout }) {
+function Header() {
+  const { auth, login, logout } = useContext(AuthContext);
+
   return (
     <header className="bg-light">
       <nav className="container navbar-expand py-2">
