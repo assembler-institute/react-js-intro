@@ -104,6 +104,7 @@ $ git checkout -b <new_branch_name> <remote_branch_name>
 - [`Context.Consumer`](#contextconsumer)
 - [Using Multiple Contexts](#using-multiple-contexts)
 - [Part VIII. `useReducer()`](#part-viii-usereducer)
+- [Part IX. Combining Context with `useReducer()`](#part-ix-combining-context-with-usereducer)
 - [Learn More About Create React App](#learn-more-about-create-react-app)
 
 ---
@@ -3823,6 +3824,255 @@ function App() {
 }
 
 export default App;
+```
+
+---
+
+## Part IX. Combining Context with `useReducer()`
+
+For the next step, let's see how we can combine the Context API with the `useReducer()` hook to handle our apps state.
+
+First, lets convert our previous example with the `AuthContext` so that the auth logic is moved from `App` to the `AuthContextProvider` component.
+
+```jsx
+// src/App.js
+import React, { useState } from "react";
+import { Route, Switch } from "react-router-dom";
+
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
+import Users from "./pages/Users";
+import PrivatePage from "./pages/PrivatePage";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+import { HOME, PROFILE, USERS, PRIVATE } from "./constants/routes";
+
+import AuthContext from "./context/auth-context";
+import LocaleContextProvider from "./components/LocaleContextProvider";
+
+function App() {
+  const [users, setUsers] = useState([]);
+  const [auth, setAuth] = useState({
+    user: null,
+    isAuthenticated: false,
+  });
+
+  function saveUser(userData) {
+    setUsers((prevState) => [...prevState, userData]);
+  }
+
+  function login() {
+    setAuth((prevState) => ({
+      ...prevState,
+      isAuthenticated: true,
+    }));
+  }
+
+  function logout() {
+    setAuth((prevState) => ({
+      ...prevState,
+      isAuthenticated: false,
+    }));
+  }
+
+  return (
+    <LocaleContextProvider>
+      <AuthContext.Provider
+        value={{ auth: auth, login: login, logout: logout }}
+      >
+        <Switch>
+          <Route path={PROFILE}>
+            <Profile saveUser={saveUser} />
+          </Route>
+          <Route path={USERS}>
+            <Users users={users} />
+          </Route>
+
+          <ProtectedRoute path={PRIVATE}>
+            <PrivatePage />
+          </ProtectedRoute>
+
+          <Route path={HOME} exact>
+            <Home users={users} />
+          </Route>
+        </Switch>
+      </AuthContext.Provider>
+    </LocaleContextProvider>
+  );
+}
+
+export default App;
+```
+
+First, lets create the `AuthContextProvider` component:
+
+```jsx
+// src/components/AuthContextProvider
+import React, { useState } from "react";
+
+import AuthContext from "../../context/auth-context";
+
+function AuthContextProvider({ children }) {
+  const [auth, setAuth] = useState({
+    user: null,
+    isAuthenticated: false,
+  });
+
+  function login() {
+    setAuth((prevState) => ({
+      ...prevState,
+      isAuthenticated: true,
+    }));
+  }
+
+  function logout() {
+    setAuth((prevState) => ({
+      ...prevState,
+      isAuthenticated: false,
+    }));
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{
+        auth: auth,
+        login: login,
+        logout: logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export default AuthContextProvider;
+```
+
+Now our `App` component looks like the following:
+
+```jsx
+import React, { useState } from "react";
+import { Route, Switch } from "react-router-dom";
+
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
+import Users from "./pages/Users";
+import PrivatePage from "./pages/PrivatePage";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+import { HOME, PROFILE, USERS, PRIVATE } from "./constants/routes";
+
+import AuthContextProvider from "./components/AuthContextProvider";
+import LocaleContextProvider from "./components/LocaleContextProvider";
+
+function App() {
+  const [users, setUsers] = useState([]);
+
+  function saveUser(userData) {
+    setUsers((prevState) => [...prevState, userData]);
+  }
+
+  return (
+    <LocaleContextProvider>
+      <AuthContextProvider>
+        <Switch>
+          <Route path={PROFILE}>
+            <Profile saveUser={saveUser} />
+          </Route>
+          <Route path={USERS}>
+            <Users users={users} />
+          </Route>
+
+          <ProtectedRoute path={PRIVATE}>
+            <PrivatePage />
+          </ProtectedRoute>
+
+          <Route path={HOME} exact>
+            <Home users={users} />
+          </Route>
+        </Switch>
+      </AuthContextProvider>
+    </LocaleContextProvider>
+  );
+}
+
+export default App;
+```
+
+Now that the auth logic has been extracted from the `App` component lets convert the `AuthContextProvider` to the `useReducer` hook.
+
+```jsx
+// src/components/AuthContextProvider
+import React, { useReducer } from "react";
+
+import AuthContext from "../../context/auth-context";
+
+const authInitialState = {
+  user: null,
+  isAuthenticated: false,
+};
+
+const LOGIN = "LOGIN";
+const LOGOUT = "LOGOUT";
+
+function authReducer(state, action) {
+  switch (action.type) {
+    case LOGIN: {
+      return {
+        ...state,
+        user: {
+          ...action.payload,
+        },
+        isAuthenticated: true,
+      };
+    }
+    case LOGOUT: {
+      return {
+        ...state,
+        user: null,
+        isAuthenticated: false,
+      };
+    }
+    default: {
+      return state;
+    }
+  }
+}
+
+function AuthContextProvider({ children }) {
+  const [authState, dispatch] = useReducer(authReducer, authInitialState);
+
+  function login() {
+    dispatch({
+      type: LOGIN,
+      payload: {
+        firstName: "Dani",
+        lastName: "Assembler",
+        email: "dani@mail.com",
+      },
+    });
+  }
+
+  function logout() {
+    dispatch({
+      type: LOGOUT,
+    });
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{
+        auth: authState,
+        login: login,
+        logout: logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export default AuthContextProvider;
 ```
 
 ## Learn More About Create React App
