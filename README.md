@@ -103,6 +103,7 @@ $ git checkout -b <new_branch_name> <remote_branch_name>
 - [Avoiding Prop Drilling With React Context](#avoiding-prop-drilling-with-react-context)
 - [`Context.Consumer`](#contextconsumer)
 - [Using Multiple Contexts](#using-multiple-contexts)
+- [Part VIII. `useReducer()`](#part-viii-usereducer)
 - [Learn More About Create React App](#learn-more-about-create-react-app)
 
 ---
@@ -3443,6 +3444,385 @@ function Header() {
 }
 
 export default Header;
+```
+
+---
+
+## Part VIII. `useReducer()`
+
+`useReducer()` is one of a handful of React hooks that shipped in React 16.8.0. It accepts a reducer function and the application’s initial state and then it returns the current application state and a dispatch function that we can execute to dispatch actions to update the state of our app.
+
+It’s an alternative to `useState()`. It is recommended to use it instead of `useState()` when we have many different state variables that we need to update at the same time.
+
+---
+
+<img src="src/img/dispatch-diagram.gif">
+
+---
+
+It accepts a reducer of type `(state, action) => newState`, and returns the current state paired with a dispatch method.
+
+```jsx
+const [state, dispatch] = useReducer(reducer, initialState);
+```
+
+Before we move on to see how to use it, let's first take a look at the following example:
+
+```jsx
+import React, { useState } from "react";
+
+function App() {
+  const [count, setCount] = useState(0);
+
+  function incrementCount() {
+    setCount((prevCount) => prevCount + 1);
+  }
+
+  function decrementCount() {
+    setCount((prevCount) => prevCount - 1);
+  }
+
+  function resetCount() {
+    setCount(0);
+  }
+
+  return (
+    <main className="container mt-5">
+      <section className="row-cols-1">
+        <div className="col mb-2">
+          <h1>Current count: {count}</h1>
+        </div>
+        <div className="col mb-2">
+          <hr />
+        </div>
+        <div className="col mb-2">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={incrementCount}
+          >
+            Increment
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary mr-3 ml-3"
+            onClick={decrementCount}
+          >
+            Decrement
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={resetCount}>
+            Reset
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+Can be converted to `useReducer()` using the following way:
+
+```jsx
+import React, { useReducer } from "react";
+
+const INCREMENT = "INCREMENT";
+const DECREMENT = "DECREMENT";
+const RESET = "RESET";
+
+function reducer(state, action) {
+  switch (action.type) {
+    case INCREMENT: {
+      return {
+        count: state.count + 1,
+      };
+    }
+    case DECREMENT: {
+      return {
+        count: state.count - 1,
+      };
+    }
+    case RESET: {
+      return {
+        count: 0,
+      };
+    }
+    default: {
+      return state;
+    }
+  }
+}
+
+const initialState = { count: 0 };
+
+function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  function incrementCount() {
+    dispatch({ type: INCREMENT });
+  }
+
+  function decrementCount() {
+    dispatch({ type: DECREMENT });
+  }
+
+  function resetCount() {
+    dispatch({ type: RESET });
+  }
+
+  return (
+    <main className="container mt-5">
+      <section className="row-cols-1">
+        <div className="col mb-2">
+          <h1>Current count: {state.count}</h1>
+        </div>
+        <div className="col mb-2">
+          <hr />
+        </div>
+        <div className="col mb-2">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={incrementCount}
+          >
+            Increment
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary mr-3 ml-3"
+            onClick={decrementCount}
+          >
+            Decrement
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={resetCount}
+          >
+            Reset
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+However in this case we can't really see why we would prefer using the reducer hook over the state hook.
+
+The `useReducer()` hook is much easier to work with, when we have more than 2 or 3 state variables.
+
+Let's see another example with a network request. First with the `useState` hook.
+
+```jsx
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+import Main from "./components/Main";
+
+function App() {
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadData() {
+      if (mounted) {
+        setIsLoading(true);
+      }
+
+      try {
+        const response = await axios.get(
+          "https://jsonplaceholder.typicode.com/users"
+        );
+
+        if (mounted) {
+          setIsLoading(false);
+          setData(response.data);
+        }
+      } catch (error) {
+        if (mounted) {
+          setIsLoading(false);
+          setErrorMessage(error.message);
+          setHasError(true);
+        }
+      }
+    }
+
+    if (!data) {
+      loadData();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [data]);
+
+  return (
+    <Main>
+      <section className="row">
+        <div className="col col-12">
+          <h1 className="h3">Users</h1>
+          <hr />
+        </div>
+        {hasError && (
+          <div className="col col-12">
+            <p>Something went wrong</p>
+            <code>{errorMessage}</code>
+          </div>
+        )}
+        {isLoading && (
+          <div className="col col-12">
+            <p>Loading users... </p>
+          </div>
+        )}
+        {!hasError && !isLoading && (
+          <div className="col col-12">
+            <pre>
+              <code>{JSON.stringify(data, null, 2)}</code>
+            </pre>
+          </div>
+        )}
+      </section>
+    </Main>
+  );
+}
+
+export default App;
+```
+
+Now with the `useReducer` hook.
+
+```jsx
+import React, { useReducer, useEffect } from "react";
+import axios from "axios";
+
+import Main from "./components/Main";
+
+const FETCH_INIT = "FETCH_INIT";
+const FETCH_DONE = "FETCH_DONE";
+const FETCH_ERROR = "FETCH_ERROR";
+
+const initialState = {
+  data: null,
+  isLoading: false,
+  hasError: false,
+  errorMessage: null,
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case FETCH_INIT: {
+      return {
+        ...state,
+        isLoading: true,
+      };
+    }
+    case FETCH_DONE: {
+      return {
+        ...state,
+        data: { ...action.payload },
+        errorMessage: null,
+        hasError: false,
+        isLoading: false,
+      };
+    }
+    case FETCH_ERROR: {
+      return {
+        ...state,
+        errorMessage: action.payload,
+        hasError: true,
+        isLoading: false,
+      };
+    }
+    default: {
+      return state;
+    }
+  }
+}
+
+function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const { data, isLoading, hasError, errorMessage } = state;
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadData() {
+      if (mounted) {
+        dispatch({
+          type: FETCH_INIT,
+        });
+      }
+
+      try {
+        const response = await axios.get(
+          "https://jsonplaceholder.typicode.com/users"
+        );
+
+        if (mounted) {
+          dispatch({
+            type: FETCH_DONE,
+            payload: response.data,
+          });
+        }
+      } catch (error) {
+        if (mounted) {
+          dispatch({
+            type: FETCH_ERROR,
+            payload: error.message,
+          });
+        }
+      }
+    }
+
+    if (!data) {
+      loadData();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [data]);
+
+  return (
+    <Main>
+      <section className="row">
+        <div className="col col-12">
+          <h1 className="h3">Users</h1>
+          <hr />
+        </div>
+        {hasError && (
+          <div className="col col-12">
+            <p>Something went wrong</p>
+            <code>{errorMessage}</code>
+          </div>
+        )}
+        {isLoading && (
+          <div className="col col-12">
+            <p>Loading users... </p>
+          </div>
+        )}
+        {!hasError && !isLoading && (
+          <div className="col col-12">
+            <pre>
+              <code>{JSON.stringify(data, null, 2)}</code>
+            </pre>
+          </div>
+        )}
+      </section>
+    </Main>
+  );
+}
+
+export default App;
 ```
 
 ## Learn More About Create React App
