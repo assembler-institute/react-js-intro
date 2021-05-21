@@ -1,14 +1,41 @@
-import React, { useContext } from "react";
+import React, { memo, useContext } from "react";
 import { NavLink } from "react-router-dom";
 
 import { HOME, PROFILE, USERS, PRIVATE } from "../../constants/routes";
-import AuthContext from "../../context/auth-context";
+import {
+  AuthMixedContext,
+  // AuthStateContext,
+  // AuthDispatchContext,
+} from "../../context/auth-context";
+// import { LOGIN, LOGOUT } from "../AuthContextProvider/auth-context-types";
 import LocaleContext from "../../context/locale-context";
 import Button from "../Button";
 
 function Header() {
-  const { auth, login, logout } = useContext(AuthContext);
+  const { auth, login, logout } = useContext(AuthMixedContext);
+  // const auth = useContext(AuthStateContext);
+  // const dispatch = useContext(AuthDispatchContext);
   const { locale, toggleLocale } = useContext(LocaleContext);
+
+  // eslint-disable-next-line no-console
+  console.log("Render: <Header />");
+
+  // function login() {
+  //   dispatch({
+  //     type: LOGIN,
+  //     payload: {
+  //       firstName: "Dani",
+  //       lastName: "Assembler",
+  //       email: "dani@mail.com",
+  //     },
+  //   });
+  // }
+  //
+  // function logout() {
+  //   dispatch({
+  //     type: LOGOUT,
+  //   });
+  // }
 
   return (
     <header className="bg-light">
@@ -75,4 +102,4 @@ function Header() {
   );
 }
 
-export default Header;
+export default memo(Header);
