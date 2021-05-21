@@ -1,4 +1,4 @@
-import React, { useState, useReducer } from "react";
+import React, { useState } from "react";
 import { Route, Switch } from "react-router-dom";
 
 import Home from "./pages/Home";
@@ -9,41 +9,12 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Button from "./components/Button";
 
 import { HOME, PROFILE, USERS, PRIVATE } from "./constants/routes";
-import { AuthMixedContext } from "./context/auth-context";
-// import AuthContextProvider from "./components/AuthContextProvider";
+import AuthContextProvider from "./components/AuthContextProvider";
 import LocaleContextProvider from "./components/LocaleContextProvider";
-
-import {
-  LOGIN,
-  LOGOUT,
-} from "./components/AuthContextProvider/auth-context-types";
-
-import {
-  authInitialState,
-  authReducer,
-} from "./components/AuthContextProvider/auth-reducer";
 
 function App() {
   const [users, setUsers] = useState([]);
   const [count, setCount] = useState(0);
-  const [auth, dispatch] = useReducer(authReducer, authInitialState);
-
-  function login() {
-    dispatch({
-      type: LOGIN,
-      payload: {
-        firstName: "Dani",
-        lastName: "Assembler",
-        email: "dani@mail.com",
-      },
-    });
-  }
-
-  function logout() {
-    dispatch({
-      type: LOGOUT,
-    });
-  }
 
   function saveUser(userData) {
     setUsers((prevState) => [...prevState, userData]);
@@ -52,7 +23,7 @@ function App() {
   return (
     <>
       <LocaleContextProvider>
-        <AuthMixedContext.Provider value={{ auth, login, logout }}>
+        <AuthContextProvider>
           <Switch>
             <Route path={PROFILE}>
               <Profile saveUser={saveUser} />
@@ -67,7 +38,7 @@ function App() {
               <Home users={users} />
             </Route>
           </Switch>
-        </AuthMixedContext.Provider>
+        </AuthContextProvider>
       </LocaleContextProvider>
       <div className="container">
         <div className="row">

@@ -3,39 +3,41 @@ import { NavLink } from "react-router-dom";
 
 import { HOME, PROFILE, USERS, PRIVATE } from "../../constants/routes";
 import {
-  AuthMixedContext,
-  // AuthStateContext,
-  // AuthDispatchContext,
+  AuthStateContext,
+  AuthDispatchContext,
 } from "../../context/auth-context";
-// import { LOGIN, LOGOUT } from "../AuthContextProvider/auth-context-types";
-import LocaleContext from "../../context/locale-context";
+import {
+  LocaleStateContext,
+  LocaleDispatchContext,
+} from "../../context/locale-context";
+import { LOGIN, LOGOUT } from "../AuthContextProvider/auth-context-types";
 import Button from "../Button";
 
 function Header() {
-  const { auth, login, logout } = useContext(AuthMixedContext);
-  // const auth = useContext(AuthStateContext);
-  // const dispatch = useContext(AuthDispatchContext);
-  const { locale, toggleLocale } = useContext(LocaleContext);
+  const auth = useContext(AuthStateContext);
+  const dispatch = useContext(AuthDispatchContext);
+  const locale = useContext(LocaleStateContext);
+  const toggleLocale = useContext(LocaleDispatchContext);
 
   // eslint-disable-next-line no-console
   console.log("Render: <Header />");
 
-  // function login() {
-  //   dispatch({
-  //     type: LOGIN,
-  //     payload: {
-  //       firstName: "Dani",
-  //       lastName: "Assembler",
-  //       email: "dani@mail.com",
-  //     },
-  //   });
-  // }
-  //
-  // function logout() {
-  //   dispatch({
-  //     type: LOGOUT,
-  //   });
-  // }
+  function login() {
+    dispatch({
+      type: LOGIN,
+      payload: {
+        firstName: "Dani",
+        lastName: "Assembler",
+        email: "dani@mail.com",
+      },
+    });
+  }
+
+  function logout() {
+    dispatch({
+      type: LOGOUT,
+    });
+  }
 
   return (
     <header className="bg-light">

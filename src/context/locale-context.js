@@ -1,8 +1,12 @@
 import { createContext } from "react";
 
-const LocaleContext = createContext({
+export const LocaleContext = createContext({
   locale: "en",
   toggleLocale: () => {},
 });
 
-export default LocaleContext;
+export const LocaleStateContext = createContext({
+  locale: "en",
+});
+
+export const LocaleDispatchContext = createContext(() => {});

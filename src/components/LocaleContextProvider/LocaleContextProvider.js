@@ -1,27 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 
-import LocaleContext from "../../context/locale-context";
+import {
+  LocaleStateContext,
+  LocaleDispatchContext,
+} from "../../context/locale-context";
 
 function LocaleContextProvider({ children }) {
   const [locale, setLocale] = useState("en");
 
-  function toggleLocale() {
+  const toggleLocale = useCallback(() => {
     if (locale === "en") {
       setLocale("es");
     } else {
       setLocale("en");
     }
-  }
+  }, [locale]);
 
   return (
-    <LocaleContext.Provider
-      value={{
-        locale: locale,
-        toggleLocale: toggleLocale,
-      }}
-    >
-      {children}
-    </LocaleContext.Provider>
+    <LocaleStateContext.Provider value={locale}>
+      <LocaleDispatchContext.Provider value={toggleLocale}>
+        {children}
+      </LocaleDispatchContext.Provider>
+    </LocaleStateContext.Provider>
   );
 }
 
