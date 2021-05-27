@@ -105,6 +105,8 @@ $ git checkout -b <new_branch_name> <remote_branch_name>
 - [Using Multiple Contexts](#using-multiple-contexts)
 - [Part VIII. `useReducer()`](#part-viii-usereducer)
 - [Part IX. Combining Context with `useReducer()`](#part-ix-combining-context-with-usereducer)
+- [Part X. Caveats When Using Context](#part-x-caveats-when-using-context)
+- [Caveats](#caveats)
 - [Learn More About Create React App](#learn-more-about-create-react-app)
 
 ---
@@ -4074,6 +4076,486 @@ function AuthContextProvider({ children }) {
 
 export default AuthContextProvider;
 ```
+
+---
+
+## Part X. Caveats When Using Context
+
+A stated in the React docs:
+
+- [Context API](https://reactjs.org/docs/context.html#contextprovider)
+- [useContext](https://reactjs.org/docs/hooks-reference.html#usecontext)
+
+_All consumers that are descendants of a Provider will re-render whenever the Provider’s value prop changes. The propagation from Provider to its descendant consumers (including `.contextType` and `useContext`) is not subject to the `shouldComponentUpdate` method, so the consumer is updated even when an ancestor component skips an update._
+
+_Changes are determined by comparing the new and old values using the same algorithm as `Object.is`._
+
+_When the nearest `<MyContext.Provider>` above the component updates, this Hook will trigger a rerender with the latest context value passed to that `MyContext provider`. Even if an ancestor uses `React.memo` or `shouldComponentUpdate`, a rerender will still happen starting at the component itself using useContext._
+
+## Caveats
+
+However, depending on how we provide the context values we might run into [some issues](https://reactjs.org/docs/context.html#caveats):
+
+_Because context uses reference identity to determine when to re-render, there are some gotchas that could trigger unintentional renders in consumers when a provider’s parent re-renders. For example, the code below will re-render all consumers every time the Provider re-renders because a new object is always created for value:_
+
+If we provide the context value to the component as seen bellow, the consumers of the context will receive a new array each time the `App` component is updated, that is, on every render a new `{ something: "something" }` is created and this will cause the child consumers to rerender.
+
+```jsx
+class App extends React.Component {
+  render() {
+    return (
+      <MyContext.Provider value={{ something: "something" }}>
+        <Toolbar />
+      </MyContext.Provider>
+    );
+  }
+}
+```
+
+The solution the docs provide is the following:
+
+_To get around this, lift the value into the parent’s state:_
+
+```jsx
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      value: { something: "something" },
+    };
+  }
+
+  render() {
+    return (
+      <MyContext.Provider value={this.state.value}>
+        <Toolbar />
+      </MyContext.Provider>
+    );
+  }
+}
+```
+
+Let's see how this is affecting our app.
+
+If we take a look at the `Header` and `Main` components we are logging to the console each time the component is rendered as we are trying to prevent the `Header` component from rerendering using `React.memo`.
+
+### [`React.memo`](https://reactjs.org/docs/react-api.html#reactmemo)
+
+_If your component renders the same result given the same props, you can wrap it in a call to React.memo for a performance boost in some cases by memoizing the result. This means that React will skip rendering the component, and reuse the last rendered result._
+
+The components will be rendered each time we click the `+` and `-` buttons.
+
+However, we can see that the `Header` component is still rendering each time we click the plus or minus buttons.
+
+<img src="src/img/context-logging-not-working.png">
+
+And if we try to see why it rerendered using the React.js Dev Tools Profiller we can see the reason:
+
+Note: for this to work you need to active the `Record why each component rendered while profiling.` option in the Profiler tab.
+
+<img src="src/img/context-logging-profiler-not-working-settings.png">
+
+As we can see, the component rerender because the parent component rerendered.
+
+<img src="src/img/context-logging-profiler-not-working.png">
+
+### Why is it happening?
+
+If we take a look our `App` component we can see that we are rendering a new object for the `AuthMixedContext.Provider` which is causing the consumers of the provider to rerender each time because they receive a new object reference each time the counter is updated.
+
+```jsx
+<AuthMixedContext.Provider value={{ auth, login, logout }}>
+```
+
+### Solving the Rerendering Problem
+
+In order to solve it we need divide our Auth context.
+
+One of the most common solutions to this problem, when using the `useReducer` and `useContext` hooks, is to create a context for the value and one for the dispatch.
+
+This means we will have a `AuthStateContext` and a `AuthDispatchContext`.
+
+```jsx
+// src/context/auth-context.js
+import { createContext } from "react";
+
+// the previous context with the rerendering bug
+export const AuthMixedContext = createContext({
+  user: null,
+  isAuthenticated: false,
+  login: () => {},
+  logout: () => {},
+});
+
+// the optimized context
+export const AuthStateContext = createContext({
+  user: null,
+  isAuthenticated: false,
+});
+
+export const AuthDispatchContext = createContext(() => {});
+```
+
+We will be using these contexts in our `AuthContextProvider` component. This way the `AuthStateContext.Provider` receives the same object reference until the state is updated and the `AuthDispatchContext.Provider` will always receive the same `dispatch` reference because `dispatch` is guaranteed to always be the same by React.
+
+```jsx
+import React, { useReducer } from "react";
+
+import {
+  AuthDispatchContext,
+  AuthStateContext,
+} from "../../context/auth-context";
+
+import { authReducer, authInitialState } from "./auth-reducer";
+
+function AuthContextProvider({ children }) {
+  const [authState, dispatch] = useReducer(authReducer, authInitialState);
+
+  return (
+    <AuthStateContext.Provider value={authState}>
+      <AuthDispatchContext.Provider value={dispatch}>
+        {children}
+      </AuthDispatchContext.Provider>
+    </AuthStateContext.Provider>
+  );
+}
+
+export default AuthContextProvider;
+```
+
+We now need to use it in the `App` component.
+
+```diff
+diff --git a/src/App.js b/src/App.js
+index c7d44b4..2aad413 100644
+--- a/src/App.js
++++ b/src/App.js
+@@ -1,4 +1,4 @@
+-import React, { useState, useReducer } from "react";
++import React, { useState } from "react";
+ import { Route, Switch } from "react-router-dom";
+
+ import Home from "./pages/Home";
+@@ -9,41 +9,12 @@ import ProtectedRoute from "./components/ProtectedRoute";
+ import Button from "./components/Button";
+
+ import { HOME, PROFILE, USERS, PRIVATE } from "./constants/routes";
+-import { AuthMixedContext } from "./context/auth-context";
+-// import AuthContextProvider from "./components/AuthContextProvider";
++import AuthContextProvider from "./components/AuthContextProvider";
+ import LocaleContextProvider from "./components/LocaleContextProvider";
+
+-import {
+-  LOGIN,
+-  LOGOUT,
+-} from "./components/AuthContextProvider/auth-context-types";
+-
+-import {
+-  authInitialState,
+-  authReducer,
+-} from "./components/AuthContextProvider/auth-reducer";
+-
+ function App() {
+   const [users, setUsers] = useState([]);
+   const [count, setCount] = useState(0);
+-  const [auth, dispatch] = useReducer(authReducer, authInitialState);
+-
+-  function login() {
+-    dispatch({
+-      type: LOGIN,
+-      payload: {
+-        firstName: "Dani",
+-        lastName: "Assembler",
+-        email: "dani@mail.com",
+-      },
+-    });
+-  }
+-
+-  function logout() {
+-    dispatch({
+-      type: LOGOUT,
+-    });
+-  }
+
+   function saveUser(userData) {
+     setUsers((prevState) => [...prevState, userData]);
+@@ -52,7 +23,7 @@ function App() {
+   return (
+     <>
+       <LocaleContextProvider>
+-        <AuthMixedContext.Provider value={{ auth, login, logout }}>
++        <AuthContextProvider>
+           <Switch>
+             <Route path={PROFILE}>
+               <Profile saveUser={saveUser} />
+@@ -67,7 +38,7 @@ function App() {
+               <Home users={users} />
+             </Route>
+           </Switch>
+-        </AuthMixedContext.Provider>
++        </AuthContextProvider>
+       </LocaleContextProvider>
+       <div className="container">
+         <div className="row">
+```
+
+We also need to update the `Header` component so that it uses each of the new contexts. To do so, we need to uncomment all the code in the component and imports.
+
+#### Did It Work?
+
+However, if we try to check if the rerendering bug is fixed, we can see that it is still happening.
+
+This is happening because the `Header` component is also subscribed to the `LocaleContext` provider which is creating a new object reference on every render.
+
+```jsx
+const { locale, toggleLocale } = useContext(LocaleContext);
+```
+
+To fix this, we need to update the `LocaleContextProvider` to split the logic to change the locale and the locale value.
+
+First, we need to split the `LocaleContext`:
+
+```jsx
+// src/context/locale-context
+
+import { createContext } from "react";
+
+export const LocaleStateContext = createContext({
+  locale: "en",
+});
+
+export const LocaleDispatchContext = createContext(() => {});
+```
+
+Then, we need to update the `LocaleContextProvider`.
+
+Furthermore, we also need to use the `useCallback` hook to memoize the `toggleLocale` function since it will be created on every render and it will break the `memo()` dependency check.
+
+```jsx
+// src/components/LocaleContextProvider
+import React, { useState, useCallback } from "react";
+
+import {
+  LocaleStateContext,
+  LocaleDispatchContext,
+} from "../../context/locale-context";
+
+function LocaleContextProvider({ children }) {
+  const [locale, setLocale] = useState("en");
+
+  const toggleLocale = useCallback(() => {
+    if (locale === "en") {
+      setLocale("es");
+    } else {
+      setLocale("en");
+    }
+  }, [locale]);
+
+  return (
+    <LocaleStateContext.Provider value={locale}>
+      <LocaleDispatchContext.Provider value={toggleLocale}>
+        {children}
+      </LocaleDispatchContext.Provider>
+    </LocaleStateContext.Provider>
+  );
+}
+
+export default LocaleContextProvider;
+```
+
+As a last step, we need to update the `Header` component so that it uses the new contexts.
+
+```jsx
+import React, { memo, useContext } from "react";
+import { NavLink } from "react-router-dom";
+
+import { HOME, PROFILE, USERS, PRIVATE } from "../../constants/routes";
+import {
+  AuthStateContext,
+  AuthDispatchContext,
+} from "../../context/auth-context";
+import {
+  LocaleStateContext,
+  LocaleDispatchContext,
+} from "../../context/locale-context";
+import { LOGIN, LOGOUT } from "../AuthContextProvider/auth-context-types";
+import Button from "../Button";
+
+function Header() {
+  const auth = useContext(AuthStateContext);
+  const dispatch = useContext(AuthDispatchContext);
+  const locale = useContext(LocaleStateContext);
+  const toggleLocale = useContext(LocaleDispatchContext);
+
+  // eslint-disable-next-line no-console
+  console.log("Render: <Header />");
+
+  function login() {
+    dispatch({
+      type: LOGIN,
+      payload: {
+        firstName: "Dani",
+        lastName: "Assembler",
+        email: "dani@mail.com",
+      },
+    });
+  }
+
+  function logout() {
+    dispatch({
+      type: LOGOUT,
+    });
+  }
+
+  return (
+    <header className="bg-light">
+      <nav className="container navbar-expand py-2">
+        <div className="d-flex align-items-center">
+          <div className="nav nav-pills">
+            <NavLink
+              className="nav-item nav-link"
+              to={HOME}
+              exact
+              activeClassName="active"
+            >
+              {locale === "en" ? "Home" : "Inicio"}
+            </NavLink>
+            <NavLink
+              className="nav-item nav-link"
+              to={PROFILE}
+              activeClassName="active"
+            >
+              {locale === "en" ? "Profile" : "Perfíl"}
+            </NavLink>
+            <NavLink
+              className="nav-item nav-link"
+              to={USERS}
+              activeClassName="active"
+            >
+              {locale === "en" ? "Users" : "Usuarios"}
+            </NavLink>
+            <NavLink
+              className="nav-item nav-link"
+              to={PRIVATE}
+              activeClassName="active"
+            >
+              {locale === "en" ? "Private page" : "Página privada"}
+            </NavLink>
+          </div>
+          <div className="ml-auto d-flex align-items-center">
+            {auth.isAuthenticated ? (
+              <p className="m-0">{locale === "en" ? "hello" : "hola"}</p>
+            ) : (
+              <p className="m-0">
+                {locale === "en" ? "please login" : "por favor inicia sesión"}
+              </p>
+            )}
+            <div className="mr-3 ml-3">
+              <Button
+                disabled={auth.isAuthenticated}
+                additionalClasses="mr-2"
+                onClick={login}
+              >
+                {locale === "en" ? "Login" : "Iniciar sesión"}
+              </Button>
+              <Button disabled={!auth.isAuthenticated} onClick={logout}>
+                {locale === "en" ? "Logout" : "Cerrar sesión"}
+              </Button>
+            </div>
+            <Button onClick={toggleLocale}>
+              {locale === "en" ? "English" : "Español"}
+            </Button>
+          </div>
+        </div>
+      </nav>
+    </header>
+  );
+}
+
+export default memo(Header);
+```
+
+```diff
+diff --git a/src/components/Header/Header.js b/src/components/Header/Header.js
+index 9a42b77..c512edf 100644
+--- a/src/components/Header/Header.js
++++ b/src/components/Header/Header.js
+@@ -3,39 +3,41 @@ import { NavLink } from "react-router-dom";
+
+ import { HOME, PROFILE, USERS, PRIVATE } from "../../constants/routes";
+ import {
+-  AuthMixedContext,
+-  // AuthStateContext,
+-  // AuthDispatchContext,
++  AuthStateContext,
++  AuthDispatchContext,
+ } from "../../context/auth-context";
+-// import { LOGIN, LOGOUT } from "../AuthContextProvider/auth-context-types";
+-import LocaleContext from "../../context/locale-context";
++import {
++  LocaleStateContext,
++  LocaleDispatchContext,
++} from "../../context/locale-context";
++import { LOGIN, LOGOUT } from "../AuthContextProvider/auth-context-types";
+ import Button from "../Button";
+
+ function Header() {
+-  const { auth, login, logout } = useContext(AuthMixedContext);
+-  // const auth = useContext(AuthStateContext);
+-  // const dispatch = useContext(AuthDispatchContext);
+-  const { locale, toggleLocale } = useContext(LocaleContext);
++  const auth = useContext(AuthStateContext);
++  const dispatch = useContext(AuthDispatchContext);
++  const locale = useContext(LocaleStateContext);
++  const toggleLocale = useContext(LocaleDispatchContext);
+
+   // eslint-disable-next-line no-console
+   console.log("Render: <Header />");
+
+-  // function login() {
+-  //   dispatch({
+-  //     type: LOGIN,
+-  //     payload: {
+-  //       firstName: "Dani",
+-  //       lastName: "Assembler",
+-  //       email: "dani@mail.com",
+-  //     },
+-  //   });
+-  // }
+-  //
+-  // function logout() {
+-  //   dispatch({
+-  //     type: LOGOUT,
+-  //   });
+-  // }
++  function login() {
++    dispatch({
++      type: LOGIN,
++      payload: {
++        firstName: "Dani",
++        lastName: "Assembler",
++        email: "dani@mail.com",
++      },
++    });
++  }
++
++  function logout() {
++    dispatch({
++      type: LOGOUT,
++    });
++  }
+
+   return (
+     <header className="bg-light">
+```
+
+Now, if we try to see if the `Header` component is still rerendering we can see that it is now memoized correctly.
+
+<img src="src/img/context-logging-working.png">
+
+As we can see, the component did not rerender when the parent component rerendered.
+
+<img src="src/img/context-profiler-working.png">
 
 ## Learn More About Create React App
 
