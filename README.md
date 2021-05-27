@@ -4081,7 +4081,7 @@ export default AuthContextProvider;
 
 ## Part X. Caveats When Using Context
 
-A stated in the React docs:
+As stated in the React docs:
 
 - [Context API](https://reactjs.org/docs/context.html#contextprovider)
 - [useContext](https://reactjs.org/docs/hooks-reference.html#usecontext)
